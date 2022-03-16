@@ -12,6 +12,10 @@ https://docs.djangoproject.com/en/4.0/ref/settings/
 
 from pathlib import Path
 
+import os
+
+from decouple import config
+
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
 BASE_DIR = Path(__file__).resolve().parent.parent
 
@@ -20,10 +24,10 @@ BASE_DIR = Path(__file__).resolve().parent.parent
 # See https://docs.djangoproject.com/en/4.0/howto/deployment/checklist/
 
 # SECURITY WARNING: keep the secret key used in production secret!
-SECRET_KEY = 'django-insecure-z)3x^=2od6n0)wmq=b43t2ox-k4l3b3#7#6mv*jodhn#-e!tnp'
+SECRET_KEY = config("django_key")
 
 # SECURITY WARNING: don't run with debug turned on in production!
-DEBUG = True
+DEBUG = config("django_debug_mode")
 
 ALLOWED_HOSTS = []
 
@@ -37,6 +41,7 @@ INSTALLED_APPS = [
     'django.contrib.sessions',
     'django.contrib.messages',
     'django.contrib.staticfiles',
+    'tg_bot.apps.TgBotConfig',
 ]
 
 MIDDLEWARE = [
@@ -54,7 +59,9 @@ ROOT_URLCONF = 'feed_bot.urls'
 TEMPLATES = [
     {
         'BACKEND': 'django.template.backends.django.DjangoTemplates',
-        'DIRS': [],
+        'DIRS': [
+            os.path.join(BASE_DIR, "/templates/"),
+        ],
         'APP_DIRS': True,
         'OPTIONS': {
             'context_processors': [
@@ -73,10 +80,67 @@ WSGI_APPLICATION = 'feed_bot.wsgi.application'
 # Database
 # https://docs.djangoproject.com/en/4.0/ref/settings/#databases
 
+DATABASE_ROUTERS = ('tg_bot.dbrouters.defaultFileScan',)
+
 DATABASES = {
     'default': {
-        'ENGINE': 'django.db.backends.sqlite3',
-        'NAME': BASE_DIR / 'db.sqlite3',
+
+        'ENGINE': 'django.db.backends.postgresql_psycopg2',
+
+        'NAME': 'default',
+
+        'USER': config("postgres_user"),
+
+        'PASSWORD': config("postgres_password"),
+
+        'HOST': config("postgres_host"),
+
+        'PORT': config("postgres_port")
+    },
+
+    'logic': {
+
+        'ENGINE': 'django.db.backends.postgresql_psycopg2',
+
+        'NAME': 'logic',
+
+        'USER': config("postgres_user"),
+
+        'PASSWORD': config("postgres_password"),
+
+        'HOST': config("postgres_host"),
+
+        'PORT': config("postgres_port")
+    },
+
+    'localization': {
+
+        'ENGINE': 'django.db.backends.postgresql_psycopg2',
+
+        'NAME': 'localization',
+
+        'USER': config("postgres_user"),
+
+        'PASSWORD': config("postgres_password"),
+
+        'HOST': config("postgres_host"),
+
+        'PORT': config("postgres_port")
+    },
+
+    'telebot': {
+
+        'ENGINE': 'django.db.backends.postgresql_psycopg2',
+
+        'NAME': 'telebot',
+
+        'USER': config("postgres_user"),
+
+        'PASSWORD': config("postgres_password"),
+
+        'HOST': config("postgres_host"),
+
+        'PORT': config("postgres_port")
     }
 }
 
@@ -105,7 +169,7 @@ AUTH_PASSWORD_VALIDATORS = [
 
 LANGUAGE_CODE = 'en-us'
 
-TIME_ZONE = 'UTC'
+TIME_ZONE = 'Europe/Kiev'
 
 USE_I18N = True
 
