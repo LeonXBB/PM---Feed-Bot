@@ -14,8 +14,7 @@ if __name__ == "__main__":
         subprocess.run("daphne meta.asgi:application")
         os.chdir(root)
 
-    def start_bot():
-        
+    def start_bot():       
         bot = FeedBot()
         bot.run()
 

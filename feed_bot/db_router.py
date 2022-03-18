@@ -1,5 +1,5 @@
 routes = {
-    "logic": ("", "", "", "", "", "", ""),
-    "localization": ("String"),
-    "telebot": ("PasswordPair", "User")
+    "logic": ("", ""),
+    "localization": ("TextString", "TextLanguage"),
+    "telebot": ("PasswordPair", "BotUser")
 }

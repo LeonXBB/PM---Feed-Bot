@@ -1,5 +1,13 @@
-from feed_bot.tg_bot.screens.Screen import Screen
+from ..Screen import Screen
 
 
 class Remainder(Screen):
-    pass
+    
+    remainders = []
+
+    @classmethod
+    def _get_(cls, name=None, id=None):
+        
+        for remainder in cls.remainders:
+            if ((remainder.screen_id == id or id is None) and (remainder.screen_name == name or name is None)): 
+                return remainder

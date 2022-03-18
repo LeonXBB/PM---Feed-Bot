@@ -1,0 +1,4 @@
+from .TechnicalTimeOutStart import TechnicalTimeOutStart
+from .TechnicalTimeOutEnd import TechnicalTimeOutEnd
+
+technical_time_out_popups = [TechnicalTimeOutStart, TechnicalTimeOutEnd]

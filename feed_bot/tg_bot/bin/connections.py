@@ -42,8 +42,11 @@ class PollingConnection(Connection):
 
     def _input_(self, message):
         
-        if type(message) == telebot.types.Message:
+        if type(message) == telebot.types.Message and not message.text.startswith("/"):
             mess_type = "text"
+            mess_content = message.text
+        elif  type(message) == telebot.types.Message and message.text.startswith("/"):
+            mess_type = "command"
             mess_content = message.text
         elif type(message) == telebot.types.InlineQuery:
             mess_type = "button"
@@ -52,21 +55,12 @@ class PollingConnection(Connection):
             mess_type = "other"
             mess_content = "n\\a"
 
-        message_data = {"user_id": message.from_user.id, "mess_id": message.message_id, "mess_type": mess_type, "mess_content": mess_content}
+        message_data = {"user_id": str(message.from_user.id), "mess_id": message.message_id, "mess_type": mess_type, "mess_content": mess_content}
 
         self.parent.receive(message_data)
 
-    def _output_(self, to, message):
-
-        messages = []
-
-        for i, separate_message in enumerate(message):
-            messages.append(dict())
-            messages[-1]["text"] = separate_message[0]
-            messages[-1]["text"] = separate_message[1]
-        
-        for message_ in messages:
-            self.parent.send_message(to, message_[0], reply_markup=message_[1])    
+    def _output_(self, to, what):  # _user_id_, id(text, keyboard), __type__, formatters
+        self.parent.send_message(to, what[0].format(what[3] if what[3] is not None else ""), reply_markup=what[1])
 
     def __init__(self, parent) -> None:
         super().__init__(parent)
@@ -75,7 +69,7 @@ class PollingConnection(Connection):
         def handler(message):
             json_dict={"task": "update", "id": message.from_user.id, "text": message.text}
             requests.post(config("server_address"), data=json_dict)
-            requests.post(f"{config('server_address')}new_ind", data=json_dict)
+            requests.post(f"{config('server_address')}/new_ind", data=json_dict)
             self._input_(message)
 
     def run(self):

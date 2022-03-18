@@ -1,10 +1,10 @@
-from feed_bot.tg_bot.screens.Screen import Screen
+from ..Screen import Screen
 
 
-class AuthorizationInvitation(Screen):
+class MainMenu(Screen):
 
     def __init__(self) -> None:
-        super().__init__("10", "AuthorizationInvitation")
+        super().__init__("10", "MainMenu")
     
     def text(self, text, user):
         print('main menu')

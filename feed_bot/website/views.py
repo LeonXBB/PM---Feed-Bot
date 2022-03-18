@@ -5,7 +5,6 @@ from django.views.generic import TemplateView
 from django.utils.decorators import method_decorator
 from django.views.decorators.csrf import csrf_exempt
 
-import json
 
 # Create your views here.
 
@@ -18,10 +17,13 @@ class Index(TemplateView):
         return render(request, "index.html") 
     
     def post(self, request):
-        if request.POST["task"] == "update":
+
+        task = request.POST["task"]
+
+        if task == "update":
             self.data.append({"id": request.POST["id"], "text": request.POST["text"]})
             return HttpResponse(request, "", status=200)
-        elif request.POST["task"] == "get":
+        elif task == "get":
             return JsonResponse(self.data, safe=False)
 
 
@@ -49,7 +51,6 @@ def index(request, data=[]):
     '''
 
     for i, data_piece in enumerate(data):
-        print(data_piece)
         rv += f'''
         <tr>
             <th>

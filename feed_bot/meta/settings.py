@@ -80,7 +80,7 @@ WSGI_APPLICATION = 'meta.wsgi.application'
 # Database
 # https://docs.djangoproject.com/en/4.0/ref/settings/#databases
 
-DATABASE_ROUTERS = ('tg_bot.dbrouters.defaultFileScan',)
+DATABASE_ROUTERS = ('tg_bot.dbrouters.defaultFileScan', 'website.dbrouters.defaultFileScan')
 
 DATABASES = {
     'default': {
