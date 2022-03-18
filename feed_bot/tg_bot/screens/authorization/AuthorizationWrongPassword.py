@@ -1,0 +1,21 @@
+import hashlib
+from feed_bot.tg_bot.models import PasswordPair
+from feed_bot.tg_bot.screens.Screen import Screen
+
+
+class AuthorizationWrongPassword(Screen):
+
+    def __init__(self) -> None:
+        super().__init__("01", "AuthorizationWrongPassword")
+
+    def text(self, text, user):
+            
+        for password_pair in PasswordPair.objects.all():
+            if password_pair.password_sha256 == hashlib.sha256(text).hexdigest():
+
+                if password_pair.user_id == -1: password_pair.assign_to_user(user)
+
+                user.show_screen_to(self._get_(name="MainMenu"))
+                return
+
+        user.show_screen_to(self._get_(name="AuthorizationWrongPassword"))

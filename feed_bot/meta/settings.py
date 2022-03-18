@@ -31,7 +31,6 @@ DEBUG = config("django_debug_mode")
 
 ALLOWED_HOSTS = []
 
-
 # Application definition
 
 INSTALLED_APPS = [
@@ -42,6 +41,7 @@ INSTALLED_APPS = [
     'django.contrib.messages',
     'django.contrib.staticfiles',
     'tg_bot.apps.TgBotConfig',
+    'website.apps.WebsiteConfig',
 ]
 
 MIDDLEWARE = [
@@ -54,7 +54,7 @@ MIDDLEWARE = [
     'django.middleware.clickjacking.XFrameOptionsMiddleware',
 ]
 
-ROOT_URLCONF = 'feed_bot.urls'
+ROOT_URLCONF = 'meta.urls'
 
 TEMPLATES = [
     {
@@ -74,7 +74,7 @@ TEMPLATES = [
     },
 ]
 
-WSGI_APPLICATION = 'feed_bot.wsgi.application'
+WSGI_APPLICATION = 'meta.wsgi.application'
 
 
 # Database
