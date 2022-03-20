@@ -3,5 +3,5 @@ from ..Screen import Screen
 
 class CoinTossPanel(Screen):
 
-    def __init__(self) -> None:
-        super().__init__("22", "CoinTossPanel")
+    def __init__(self, via) -> None:
+        super().__init__(via, "22", "CoinTossPanel")

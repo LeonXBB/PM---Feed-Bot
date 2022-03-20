@@ -1,6 +1,8 @@
 from decouple import config
+
 import requests
 
+from ..bin.utils import Utils
 
 class Screen(): #TODO change into django model?
     
@@ -13,44 +15,61 @@ class Screen(): #TODO change into django model?
             if ((screen.screen_id == id or id is None) and (screen.screen_name == name or name is None)): 
                 return screen
 
-    def get_texts(self):
-    
-        strings = requests.post(f"{config('server_address')}/api", json={"task": "get", "class": "TextString", "fields": ["language_1", "language_2", "language_3", "language_4", "language_5"], "params": {"screen_id": self.screen_id}})
+    def get_strings(self, via):
 
-        try:
-            return strings.json()[0]
-        except:
-            return strings.json() #TODO hack for when we don't have string for all the screens. Remove in production
+        def via_server():
+            
+            from ..models import TextString
+
+            strings = {}
+
+            all_strings = TextString.objects.all()
+            for string_ in all_strings:
+                if string_.screen_id == self.screen_id:
+                    if string_.position_index not in list(strings.keys()):
+                        strings[string_.position_index] = list()
+                    strings[string_.position_index].append([string_.language_1, string_.language_2, string_.language_3, string_.language_4, string_.language_5])
+
+            return strings
+
+        def via_bot(): # TODO rewrite as to make one big request instead of a lot of small ones
+            strings = {}
+
+            i = 0
+            while True:
+            
+                res = Utils.api("get",
+                model="TextString",
+                fields=["language_1", "language_2", "language_3", "language_4", "language_5"],
+                params={"screen_id": self.screen_id, "position_index": i}
+                )
+                
+                if len(res) == 0:
+                    break
+                else:
+                    strings[i] = [*res, ]
+                    i += 1
+
+            return strings
+
+        if via == "server":
+            return via_server()
+
+        elif via == "bot":
+            return via_bot()
 
     def get_keyboards(self):
-        return None
+        return []
 
-    def _get_button_count_(self):
-        
-        rv = 0
-
-        if self.keyboards is not None:
-            for keyboard in self.keyboards:
-                for row in keyboard:
-                    rv += len(row)
-
-        return rv
-
-    def __init__(self, screen_id=-1, screen_name="") -> None:
+    def __init__(self, via, screen_id="-1", screen_name="") -> None:
 
         self.screen_id = screen_id
         self.screen_name = screen_name
     
-        self.strings = self.get_texts()
+        self.strings = self.get_strings(via)
         self.keyboards = self.get_keyboards()
 
         self.screens.append(self)
-        
-        for i in range(self._get_button_count_()):
-            if not hasattr(self, f"button_{i}"): setattr(self, f"button_{i}", lambda self, params, user: None)
-
-    def text(self, text, user):
-        pass
 
     def show(self):
         return self.strings, self.keyboards 

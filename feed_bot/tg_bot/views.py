@@ -7,7 +7,7 @@ from django.views.generic import TemplateView
 from django.utils.decorators import method_decorator
 from django.views.decorators.csrf import csrf_exempt
 
-import json
+from .bin.utils import Utils
 
 from . import models
 # Create your views here.
@@ -16,15 +16,15 @@ from . import models
 class BotAPI(TemplateView):
 
     def post(self, request): #TODO turn subfunctions from here into class methods
-
-        data = eval(request.body.decode("utf-8"))
+        
+        data = eval(request.body.decode("utf8"))
 
         task = data["task"]
 
         if task == "get":
 
             def init():
-                return getattr(models, data["class"]), list(getattr(models, data["class"]).objects.all())
+                return getattr(models, data["model"]), list(getattr(models, data["model"]).objects.all())
             
             def filter_set():
                 
@@ -46,15 +46,49 @@ class BotAPI(TemplateView):
             
             obj_class, query_set = init()
 
-            if not len(query_set): rv = None
+            if not len(query_set): rv = [0, ]
             else: rv = filter_set()    
 
             return JsonResponse(rv, safe=False)
         
+        elif task == "get_fields":
+
+            def init():
+                return getattr(models, data["model"]), list(getattr(models, data["model"]).objects.all())
+            
+            obj_class, wrong_rv = init()
+
+            rv = [str(x) for x in list(obj_class._meta.fields)]
+
+            return JsonResponse(rv, safe=False)
+
+        elif task == "get_all":
+
+            def init():
+                return getattr(models, data["model"]), list(getattr(models, data["model"]).objects.all())
+            
+            def filter_set():
+                
+                rv = []
+                for obj_instance in query_set:
+                                      
+                    rv.append(list())
+                    for field in [str(x).split(".")[-1] for x in list(obj_class._meta.fields)]:
+                        rv[-1].append(getattr(obj_instance, field))
+
+                return rv
+            
+            obj_class, query_set = init()
+
+            if not len(query_set): rv = [0, ]
+            else: rv = filter_set()    
+
+            return JsonResponse(rv, safe=False)
+
         elif task == "get_or_make":
 
             def init():
-                return getattr(models, data["class"]), list(getattr(models, data["class"]).objects.all())
+                return getattr(models, data["model"]), list(getattr(models, data["model"]).objects.all())
             
             def make_new():
                 
@@ -91,10 +125,46 @@ class BotAPI(TemplateView):
 
             return JsonResponse(rv, safe=False)
 
+        elif task == "update":
+
+            def init():
+                return getattr(models, data["model"]), list(getattr(models, data["model"]).objects.all())
+
+            def filter_set():
+                
+                rv = []
+                for obj_instance in query_set:
+                    
+                    true = True
+
+                    for k, v in data["filter_params"].items():
+                        if not getattr(obj_instance, k) == v:
+                            true = False
+                    
+                    if true:
+                        rv.append(obj_instance)
+            
+                return rv
+
+            def run_set():
+                for obj_instance in query_set:
+                    for k, v in data["update_params"].items():
+                        setattr(obj_instance, k, v)
+                    obj_instance.save()
+
+                return [0, ]
+
+
+            obj_class, query_set = init()
+            query_set = filter_set()
+            rv = run_set()
+
+            return JsonResponse(rv, safe=False)
+
         elif task == "execute_method":
 
             def init():
-                return getattr(models, data["class"]), list(getattr(models, data["class"]).objects.all())            
+                return getattr(models, data["model"]), list(getattr(models, data["model"]).objects.all())            
 
             def filter_set():
                 
@@ -134,3 +204,9 @@ class BotAPI(TemplateView):
             rv = run_set()
 
             return JsonResponse(rv, safe=False)
+
+        elif task == "kick_in":
+            
+            Utils.init_screens("server")
+
+            return JsonResponse([0, ], safe=False)

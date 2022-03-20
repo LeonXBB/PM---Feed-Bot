@@ -2,6 +2,7 @@ import multiprocess as mp
 
 import subprocess
 import os
+import time
 
 from feed_bot.tg_bot.bin.main import FeedBot
 
@@ -14,7 +15,9 @@ if __name__ == "__main__":
         subprocess.run("daphne meta.asgi:application")
         os.chdir(root)
 
-    def start_bot():       
+    def start_bot():
+        
+        time.sleep(3) # Bot should start after the server
         bot = FeedBot()
         bot.run()
 

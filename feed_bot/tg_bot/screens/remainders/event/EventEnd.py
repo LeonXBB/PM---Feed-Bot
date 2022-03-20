@@ -3,5 +3,5 @@ from ..Remainder import Remainder
 
 class EventEnd(Remainder):
 
-    def __init__(self) -> None:
-        super().__init__("101", "EventEnd")
+    def __init__(self, via) -> None:
+        super().__init__(via, "101", "EventEnd")

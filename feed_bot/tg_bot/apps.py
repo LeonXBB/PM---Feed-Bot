@@ -1,5 +1,6 @@
-from django.apps import AppConfig
+import os
 
+from django.apps import AppConfig
 
 class TgBotConfig(AppConfig):
     default_auto_field = 'django.db.models.BigAutoField'

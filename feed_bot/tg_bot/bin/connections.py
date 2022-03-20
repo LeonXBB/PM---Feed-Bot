@@ -43,33 +43,38 @@ class PollingConnection(Connection):
     def _input_(self, message):
         
         if type(message) == telebot.types.Message and not message.text.startswith("/"):
+            mess_id =  message.message_id
             mess_type = "text"
             mess_content = message.text
         elif  type(message) == telebot.types.Message and message.text.startswith("/"):
+            mess_id =  message.message_id
             mess_type = "command"
             mess_content = message.text
-        elif type(message) == telebot.types.InlineQuery:
+        elif type(message) == telebot.types.CallbackQuery:
+            mess_id =  message.id
             mess_type = "button"
             mess_content = message.data
         else: # TODO add support for other types
+            mess_id = -1
             mess_type = "other"
             mess_content = "n\\a"
 
-        message_data = {"user_id": str(message.from_user.id), "mess_id": message.message_id, "mess_type": mess_type, "mess_content": mess_content}
+        message_data = {"user_id": str(message.from_user.id), "mess_id": mess_id, "mess_type": mess_type, "mess_content": mess_content}
 
         self.parent.receive(message_data)
 
-    def _output_(self, to, what):  # _user_id_, id(text, keyboard), __type__, formatters
-        self.parent.send_message(to, what[0].format(what[3] if what[3] is not None else ""), reply_markup=what[1])
+    def _output_(self, to, what):  
+        return self.parent.send_message(to, what[0], reply_markup=what[1]).message_id
 
     def __init__(self, parent) -> None:
         super().__init__(parent)
         
         @self.parent.message_handler(func=lambda message: True)
+        @self.parent.callback_query_handler(func=lambda message: True)
         def handler(message):
-            json_dict={"task": "update", "id": message.from_user.id, "text": message.text}
-            requests.post(config("server_address"), data=json_dict)
-            requests.post(f"{config('server_address')}/new_ind", data=json_dict)
+            #json_dict={"task": "update", "id": message.from_user.id, "text": message.text}
+            #requests.post(config("server_address"), data=json_dict)
+            #requests.post(f"{config('server_address')}/new_ind", data=json_dict)
             self._input_(message)
 
     def run(self):

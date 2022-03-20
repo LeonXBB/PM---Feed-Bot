@@ -3,5 +3,5 @@ from ..Screen import Screen
 
 class BetweenPeriodsPanel(Screen):
 
-    def __init__(self) -> None:
-        super().__init__("23", "BetweenPeriodsPanel")
+    def __init__(self, via) -> None:
+        super().__init__(via, "23", "BetweenPeriodsPanel")

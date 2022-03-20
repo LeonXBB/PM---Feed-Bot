@@ -3,5 +3,5 @@ from ..Screen import Screen
 
 class ExitConfirmation(Screen):
 
-    def __init__(self) -> None:
-        super().__init__("12", "ExitConfirmation")
+    def __init__(self, via) -> None:
+        super().__init__(via, "12", "ExitConfirmation")
