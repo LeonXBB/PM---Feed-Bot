@@ -7,8 +7,6 @@ class ControlPanelActive(Screen):
 
     def get_keyboards(self):
         
-        super().get_keyboards()
-
         pause = InlineKeyboardButton(["Pause event", ], callback_data="0_0")
         ball_control_change = InlineKeyboardButton(["⚽", ], callback_data="5_0") 
         
@@ -30,7 +28,7 @@ class ControlPanelActive(Screen):
         return [keyboard, ]
 
     def __init__(self, via) -> None:
-        super().__init__(via, "20", "ControlPanelActive")
+        super().__init__(via, "30", "ControlPanelActive")
            
     def button_0(self, params, user_id): # new event
         print("new event")

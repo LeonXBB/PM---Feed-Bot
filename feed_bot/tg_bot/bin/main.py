@@ -39,15 +39,16 @@ class FeedBot(TeleBot):
         layouts = obj.keyboards
         keyboards = []
 
+        print(f"S: {layouts}")
         for layout in layouts:
             if layout is not None:
                 keyboard = []
                 i = 0
+                print(layout)
                 for row in layout:
                     keyboard.append(list())
                     for button in row:
                         button_formatter = data[3][messages_count + len(keyboards)][i] if data[3] is not None and len(data[3]) > messages_count + len(keyboards) and data[3][messages_count + len(keyboards)] is not None else list()
-                        print(button_formatter)
                         keyboard[-1].append(InlineKeyboardButton(button["text"][user_language_id].format(button_formatter), callback_data=button["data"]))
                         i += 1
                     
@@ -61,7 +62,7 @@ class FeedBot(TeleBot):
             text = text_dict_index[0][user_language_id]
             texts.append(text)
 
-            formatters = data[3][i] if data[3] is not None and data[3][i] is not None else list()
+            formatters = data[3][i] if data[3] is not None and len(data[3]) > i and data[3][i] is not None else list()
             text = texts[i].format(*formatters)
             keyboard = None if len (keyboards) <= i else keyboards[i]
 

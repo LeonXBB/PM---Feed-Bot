@@ -15,7 +15,7 @@ from . import models
 @method_decorator(csrf_exempt, name="dispatch")
 class BotAPI(TemplateView):
 
-    def post(self, request): #TODO turn subfunctions from here into class methods
+    def post(self, request): #TODO turn subfunctions from here into class methods (OR decorators!)
         
         data = eval(request.body.decode("utf8"))
 
@@ -90,7 +90,7 @@ class BotAPI(TemplateView):
             def init():
                 return getattr(models, data["model"]), list(getattr(models, data["model"]).objects.all())
             
-            def make_new():
+            def make_new(): # SEND WHAT YOU WANT TO SET (IF MAKE) IN PARAMS, WHAT YOU WANT TO RECEIVE (ANY CASE) IN FIELDS #TODO write proper documentation 
                 
                 rv = []
                 
@@ -120,8 +120,8 @@ class BotAPI(TemplateView):
             
             obj_class, query_set = init()
 
-            if not len(query_set): rv = make_new()
-            else: rv = filter_set()    
+            if not len(query_set) or not len(filter_set()): rv = make_new()
+            else: rv = filter_set()
 
             return JsonResponse(rv, safe=False)
 

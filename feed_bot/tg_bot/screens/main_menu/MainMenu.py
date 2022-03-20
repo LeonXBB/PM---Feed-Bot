@@ -1,3 +1,5 @@
+import time
+
 from ...bin.utils import Utils
 from ..Screen import Screen
 
@@ -19,7 +21,54 @@ class MainMenu(Screen):
         super().__init__(via, "10", "MainMenu")
            
     def button_0(self, params, user_id): # new event
-        print("new event")
+        
+        # get or make template
+        # check check its preparedness
+        # send json to site
+        # return correct screen
+
+        event_id, home_team_id, away_team_id, event_competition_id, rules_set_id, epoch_scheduled = Utils.api("get_or_make",
+        model="Event",
+        params={"admin_id": user_id, "status": 0, "created": f"{int(time.time())};{user_id}"},
+        fields=["id", "home_team_id", "away_team_id", "event_competiton_id", "rules_set_id, epoch_scheduled"], 
+        )[0]
+
+        home_team_name = Utils.api("get",
+        model="Team",
+        params={"id": home_team_id},
+        fields=["name"]
+        ) 
+        away_team_name = Utils.api("get",
+        model="Team",
+        params={"id": away_team_name},
+        fields=["name"]
+        )
+        for team_name in [home_team_name, away_team_name]:
+            if len(team_name) == 0:
+                team_name = ""
+
+        event_competition_name = 0
+        
+        rules_set_name = 0
+
+        match_date = 0
+        match_time = 0
+
+        ready = False
+
+        if ready: 
+            return Utils.api("execute_method", 
+            model="BotUser",
+            params={"id": user_id},
+            method={"name": "show_screen_to", "params": ["20", [[event_id, home_team_name, away_team_name, event_competition_name, rules_set_name, match_date, match_time], []]]}
+            )[0] # TODO formatters static (again), made into a function to avoid redundancy
+
+        else:
+            return Utils.api("execute_method", 
+            model="BotUser",
+            params={"id": user_id},
+            method={"name": "show_screen_to", "params": ["21", []]}
+            )[0]
 
     def button_1(self, params, user_id): # event list
         print("event_list")
@@ -39,4 +88,8 @@ class MainMenu(Screen):
         )[0]
 
     def button_4(self, params, user_id): # exit
-        print("exit")
+        return Utils.api("execute_method", 
+        model="BotUser",
+        params={"id": user_id},
+        method={"name": "show_screen_to", "params": ["12", []]}
+        )[0]

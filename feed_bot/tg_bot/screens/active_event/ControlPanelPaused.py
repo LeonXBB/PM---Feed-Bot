@@ -21,7 +21,7 @@ class ControlPanelPaused(Screen):
         return [keyboard, ]
 
     def __init__(self, via) -> None:
-        super().__init__(via, "21", "ControlPanelPaused")
+        super().__init__(via, "31", "ControlPanelPaused")
 
         # '''PAUSED\n\nTeam 1 - Team 2\n\n3 - 1\n(1-0)\n\nTime-outs:\n1 / 0''', ]}#self.strings[0]
 
