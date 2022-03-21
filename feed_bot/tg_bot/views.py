@@ -99,7 +99,7 @@ class BotAPI(TemplateView):
 
                 for field in data["fields"]:
                     rv.append(getattr(obj_instance, field))
-                return rv
+                return [rv, ]
 
             def filter_set():
                 

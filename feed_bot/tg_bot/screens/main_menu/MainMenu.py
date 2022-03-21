@@ -15,9 +15,8 @@ class MainMenu(Screen):
         language_edit = {"text": self.strings[1][3], "data": "3_0"}
         exit = {"text": self.strings[1][4], "data": "4_0"}
 
-        #layout = [(new_event,), (event_list,), (rules_set,), (language_edit,), (exit,)] #TODO return it 
+        layout = [(new_event,), (event_list,), (rules_set,), (language_edit,), (exit,)] 
         
-        layout = [(new_event,), (rules_set,), (language_edit,), (exit,)]
         return [layout, ]
 
     def __init__(self, via) -> None:
@@ -34,11 +33,7 @@ class MainMenu(Screen):
         model="Event",
         params={"admin_id": user_id, "status": 0},
         fields=["id"], 
-        )[0]
-
-        if type(event_id) is list: event_id = event_id[0] #TODO fix
-
-        Utils.api("test", "logic", desc="created new event template", arg1=event_id)
+        )[0][0]
 
         rv = Utils.api("execute_method",
         model="Event",

@@ -54,7 +54,7 @@ class PollingConnection(Connection):
             mess_id =  message.id
             mess_type = "button"
             mess_content = message.data
-        else: # TODO add support for other types
+        else: # TODO think about adding support for other types
             mess_id = -1
             mess_type = "other"
             mess_content = "n\\a"

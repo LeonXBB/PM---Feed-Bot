@@ -12,8 +12,8 @@ class FeedBot(TeleBot):
 
     def __init__(self) -> None:
         
-                                                    #TODO move to env
-        super().__init__(config("telebot_token"), parse_mode="html")        
+
+        super().__init__(config("telebot_token"), parse_mode=config("telebot_parse_mode"))        
         self.connection = Connection.install(config("telebot_connection_type"), self)
 
     def run(self):
@@ -140,7 +140,7 @@ class FeedBot(TeleBot):
 
         # show next screen
 
-        for i, screen_data in enumerate(reply): # TODO wrong for loop
+        for i, screen_data in enumerate(reply):
             screen_data.insert(0, [message["user_id"], user_language_id])
             new_messages_ids = self.send(screen_data)
 

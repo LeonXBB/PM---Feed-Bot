@@ -26,9 +26,7 @@ class EventTimeEdit(Screen):
             model="Event",
             params={"admin_id": user_id, "status": 0},
             fields=["id"], 
-            )[0]
-
-            if type(event_id) is list: event_id = event_id[0] #TODO fix
+            )[0][0]
 
             Utils.api("update", 
             model="Event",

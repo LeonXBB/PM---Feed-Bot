@@ -4,8 +4,8 @@ import requests
 
 from ..bin.utils import Utils
 
-class Screen(): #TODO change into django model?
-    
+class Screen():
+        
     screens = []
 
     @classmethod

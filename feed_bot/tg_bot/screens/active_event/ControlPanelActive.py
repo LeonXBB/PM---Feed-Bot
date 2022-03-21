@@ -8,7 +8,7 @@ class ControlPanelActive(Screen):
     def get_keyboards(self):
         
         pause = InlineKeyboardButton(["Pause event", ], callback_data="0_0")
-        ball_control_change = InlineKeyboardButton(["⚽", ], callback_data="5_0") 
+        ball_control_change = InlineKeyboardButton(["⚽", ], callback_data="5_0") #TODO 3 positions
         
         #TODO remember, multiple points
         point_home_team = InlineKeyboardButton(["Point team Team 1"], callback_data="1_0")

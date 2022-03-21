@@ -103,7 +103,7 @@ class Event(LogicModel):  #TODO move template to different class?
         
         ready = True
         for x in formatters:
-            if x == "": #TODO check lenght instead
+            if len(x) == 0:
                 ready = False
                 break
 
