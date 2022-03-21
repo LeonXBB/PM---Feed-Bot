@@ -1,3 +1,5 @@
+from decouple import config
+
 import time
 
 from ...bin.utils import Utils
@@ -13,8 +15,9 @@ class MainMenu(Screen):
         language_edit = {"text": self.strings[1][3], "data": "3_0"}
         exit = {"text": self.strings[1][4], "data": "4_0"}
 
-        layout = [(new_event,), (event_list,), (rules_set,), (language_edit,), (exit,)]
+        #layout = [(new_event,), (event_list,), (rules_set,), (language_edit,), (exit,)] #TODO return it 
         
+        layout = [(new_event,), (rules_set,), (language_edit,), (exit,)]
         return [layout, ]
 
     def __init__(self, via) -> None:
@@ -23,58 +26,42 @@ class MainMenu(Screen):
     def button_0(self, params, user_id): # new event
         
         # get or make template
-        # check check its preparedness
         # send json to site
+        # check its preparedness
         # return correct screen
 
-        event_id, home_team_id, away_team_id, event_competition_id, rules_set_id, epoch_scheduled = Utils.api("get_or_make",
+        event_id = Utils.api("get_or_make",
         model="Event",
-        params={"admin_id": user_id, "status": 0, "created": f"{int(time.time())};{user_id}"},
-        fields=["id", "home_team_id", "away_team_id", "event_competiton_id", "rules_set_id, epoch_scheduled"], 
+        params={"admin_id": user_id, "status": 0},
+        fields=["id"], 
         )[0]
 
-        home_team_name = Utils.api("get",
-        model="Team",
-        params={"id": home_team_id},
-        fields=["name"]
-        ) 
-        away_team_name = Utils.api("get",
-        model="Team",
-        params={"id": away_team_name},
-        fields=["name"]
-        )
-        for team_name in [home_team_name, away_team_name]:
-            if len(team_name) == 0:
-                team_name = ""
+        if type(event_id) is list: event_id = event_id[0] #TODO fix
 
-        event_competition_name = 0
-        
-        rules_set_name = 0
+        Utils.api("test", "logic", desc="created new event template", arg1=event_id)
 
-        match_date = 0
-        match_time = 0
+        rv = Utils.api("execute_method",
+        model="Event",
+        params={"id": event_id},
+        method={"name": "show_template", "params": []}
+        )[0]
 
-        ready = False
-
-        if ready: 
-            return Utils.api("execute_method", 
-            model="BotUser",
-            params={"id": user_id},
-            method={"name": "show_screen_to", "params": ["20", [[event_id, home_team_name, away_team_name, event_competition_name, rules_set_name, match_date, match_time], []]]}
-            )[0] # TODO formatters static (again), made into a function to avoid redundancy
-
-        else:
-            return Utils.api("execute_method", 
-            model="BotUser",
-            params={"id": user_id},
-            method={"name": "show_screen_to", "params": ["21", []]}
-            )[0]
+        return rv
 
     def button_1(self, params, user_id): # event list
-        print("event_list")
-
-    def button_2(self, params, user_id): # set rules editor
-        print("set rules editor")
+        
+        events_ids = Utils.api("get",
+        model="Event",
+        params={"admin_id": user_id},
+        fields=["id"])
+        print(events_ids)
+        
+    def button_2(self, params, user_id): # set rules editor # TODO WRITE!
+        return Utils.api("execute_method", 
+        model="BotUser",
+        params={"id": user_id},
+        method={"name": "show_screen_to", "params": ["10", [[config("telebot_version"),],]]}
+        )[0]
 
     def button_3(self, params, user_id): # language_selection
         

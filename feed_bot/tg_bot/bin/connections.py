@@ -64,7 +64,8 @@ class PollingConnection(Connection):
         self.parent.receive(message_data)
 
     def _output_(self, to, what):  
-        return self.parent.send_message(to, what[0], reply_markup=what[1]).message_id
+        text_to_send = what[0].replace("\\n", "\n") # \n does not work for strings received from the db
+        return self.parent.send_message(to, text_to_send, reply_markup=what[1]).message_id
 
     def __init__(self, parent) -> None:
         super().__init__(parent)

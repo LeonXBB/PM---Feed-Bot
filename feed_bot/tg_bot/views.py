@@ -210,3 +210,14 @@ class BotAPI(TemplateView):
             Utils.init_screens("server")
 
             return JsonResponse([0, ], safe=False)
+
+@method_decorator(csrf_exempt, name="dispatch")
+class BotLogicAPI(TemplateView): # TODO
+
+    def post(self, request):
+        
+        data = eval(request.body.decode("utf8"))
+
+        print(f"DATA //// /// // /{data}")
+       
+        return JsonResponse(data, safe=False)

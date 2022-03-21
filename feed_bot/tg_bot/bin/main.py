@@ -12,7 +12,8 @@ class FeedBot(TeleBot):
 
     def __init__(self) -> None:
         
-        super().__init__(config("telebot_token"))        
+                                                    #TODO move to env
+        super().__init__(config("telebot_token"), parse_mode="html")        
         self.connection = Connection.install(config("telebot_connection_type"), self)
 
     def run(self):
@@ -39,12 +40,10 @@ class FeedBot(TeleBot):
         layouts = obj.keyboards
         keyboards = []
 
-        print(f"S: {layouts}")
         for layout in layouts:
             if layout is not None:
                 keyboard = []
                 i = 0
-                print(layout)
                 for row in layout:
                     keyboard.append(list())
                     for button in row:
