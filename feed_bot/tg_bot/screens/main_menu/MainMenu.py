@@ -15,8 +15,8 @@ class MainMenu(Screen):
         language_edit = {"text": self.strings[1][3], "data": "3_0"}
         exit = {"text": self.strings[1][4], "data": "4_0"}
 
-        layout = [(new_event,), (event_list,), (rules_set,), (language_edit,), (exit,)] 
-        
+        #layout = [(new_event,), (event_list,), (rules_set,), (language_edit,), (exit,)] #TODO return it 
+        layout = [(new_event,), (event_list,), (language_edit,), (exit,)]
         return [layout, ]
 
     def __init__(self, via) -> None:
@@ -49,7 +49,6 @@ class MainMenu(Screen):
         model="Event",
         params={"admin_id": user_id},
         fields=["id"])
-        print(events_ids)
         
     def button_2(self, params, user_id): # set rules editor # TODO WRITE!
         return Utils.api("execute_method", 

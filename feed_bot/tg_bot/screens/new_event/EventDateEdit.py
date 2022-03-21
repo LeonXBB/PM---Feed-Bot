@@ -1,3 +1,6 @@
+#import datetime
+#import time
+
 from ...bin.utils import Utils
 from ..Screen import Screen
 
@@ -12,15 +15,18 @@ class EventDateEdit(Screen):
         digits = text.split("-")
 
         if len(digits) == 3:
-            for digit in digits:
-                try:
-                    int(digit) #TODO change to epoch
-                except:
-                    return Utils.api("execute_method", 
-                    model="BotUser",
-                    params={"id": user_id},
-                    method={"name": "show_screen_to", "params": ["28", [], ]} #TODO move static formatters into screen class?
-                    )[0]
+            
+            try:
+                day = int(digits[0])
+                month = int(digits[1])
+                year = int(digits[2])
+                
+            except Exception as e:
+                return Utils.api("execute_method", 
+                model="BotUser",
+                params={"id": user_id},
+                method={"name": "show_screen_to", "params": ["28", [], ]} #TODO move static formatters into screen class?
+                )[0]
                 
             event_id = Utils.api("get",
             model="Event",
@@ -31,7 +37,7 @@ class EventDateEdit(Screen):
             Utils.api("update", 
             model="Event",
             filter_params={"id": event_id},
-            update_params={"delete_date": text}        
+            update_params={"date": text}        
             )
 
             return Utils.api("execute_method",

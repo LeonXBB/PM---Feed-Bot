@@ -12,15 +12,18 @@ class EventTimeEdit(Screen):
         digits = text.split(":")
 
         if len(digits) == 2:
-            for digit in digits:
-                try:
-                    int(digit) #TODO change to epoch
-                except:
-                    return Utils.api("execute_method", 
-                    model="BotUser",
-                    params={"id": user_id},
-                    method={"name": "show_screen_to", "params": ["28", [], ]} #TODO move static formatters into screen class?
-                    )[0]
+            
+            try:
+                
+                hour = digits[0]
+                minute = digits[1]
+
+            except Exception as e:
+                return Utils.api("execute_method", 
+                model="BotUser",
+                params={"id": user_id},
+                method={"name": "show_screen_to", "params": ["28", [], ]} #TODO move static formatters into screen class?
+                )[0]
                 
             event_id = Utils.api("get",
             model="Event",
@@ -31,7 +34,7 @@ class EventTimeEdit(Screen):
             Utils.api("update", 
             model="Event",
             filter_params={"id": event_id},
-            update_params={"delete_time": text}        
+            update_params={"time": text}        
             )
 
             return Utils.api("execute_method",

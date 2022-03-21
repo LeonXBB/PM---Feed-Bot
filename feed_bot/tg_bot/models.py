@@ -56,6 +56,9 @@ class Event(LogicModel):  #TODO move template to different class?
     coin_toss_ids = models.CharField(max_length=5096, default=";")
     timer_ids = models.CharField(max_length=5096, default=";")
 
+    date =  models.CharField(max_length=5096, default=";")
+    time = models.CharField(max_length=5096, default=";")
+
     delete_competition_name = models.CharField(max_length=512, default="") # TODO DELETE!!!
     delete_home_team_name = models.CharField(max_length=512, default="")
     delete_away_team_name = models.CharField(max_length=512, default="")
@@ -78,11 +81,9 @@ class Event(LogicModel):  #TODO move template to different class?
         away_team_name = away_team_obj[0].name
         
         competition_obj = Competition._get_({"id": self.competition_id})
-        print(competition_obj)
         if len(competition_obj) == 0:
             competition_obj = [Competition(), ]
             competition_obj[0].save()       
-        print(competition_obj)
         
         competition_name = competition_obj[0].name
 
@@ -97,9 +98,7 @@ class Event(LogicModel):  #TODO move template to different class?
         except:
             date, time_ = "", ""
 
-        print(self.delete_competition_name)
-
-        formatters = (str(self.id), self.delete_home_team_name, self.delete_away_team_name, self.delete_competition_name, rules_set_name, self.delete_date, self.delete_time)
+        formatters = (str(self.id), self.delete_home_team_name, self.delete_away_team_name, self.delete_competition_name, rules_set_name, self.date, self.time)
         
         ready = True
         for x in formatters:
