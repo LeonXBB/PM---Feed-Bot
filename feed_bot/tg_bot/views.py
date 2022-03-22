@@ -9,6 +9,8 @@ from django.views.decorators.csrf import csrf_exempt
 
 from .bin.utils import Utils
 
+import time
+
 from . import models
 # Create your views here.
 
@@ -73,7 +75,11 @@ class BotAPI(TemplateView):
                 for obj_instance in query_set:
                                       
                     rv.append(list())
-                    for field in [str(x).split(".")[-1] for x in list(obj_class._meta.fields)]:
+                    
+                    if "fields" not in list(data.keys()):
+                        data["fields"] =  [str(x).split(".")[-1] for x in list(obj_class._meta.fields)]
+                    
+                    for field in data["fields"]:
                         rv[-1].append(getattr(obj_instance, field))
 
                 return rv
@@ -94,7 +100,14 @@ class BotAPI(TemplateView):
                 
                 rv = []
                 
-                obj_instance = obj_class(**data["params"])
+                if "id" in list(data["params"].keys()):
+                    data["params"].pop("id")
+
+                if getattr(obj_class, "created", None) is not None:
+                    obj_instance = obj_class(**data["params"], created=f"{data['by']};{int(time.time())}")
+                else:
+                    obj_instance = obj_class(**data["params"])
+                
                 obj_instance.save()
 
                 for field in data["fields"]:

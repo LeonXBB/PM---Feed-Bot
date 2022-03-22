@@ -18,7 +18,7 @@ class LanguageSelection(Screen):
 
         for language in rv:
             layout.append(list())
-            layout[-1].append({"text": self.strings[1][0], "data": f"0_{language[0]}"})
+            layout[-1].append({"text": [language[1], language[1], language[1], language[1], language[1]], "data": f"0_{language[0]}"})
 
         return [layout, ]
 

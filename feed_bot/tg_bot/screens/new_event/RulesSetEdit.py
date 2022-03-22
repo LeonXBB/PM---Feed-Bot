@@ -4,12 +4,21 @@ from ..Screen import Screen
 
 class RulesSetEdit(Screen):
 
-    def get_keyboards(self): # TODO WRITE
+    def get_keyboards(self): # TODO do not forget to update the keyboard list when we allow users to make their own rules sets
         
-        classic_volleyball = {"text": self.strings[1][1], "data": "0_0"}
-        return_ = {"text": self.strings[1][0], "data": "0_0"}
+        layout = []
 
-        layout = [(return_,), (classic_volleyball,)]
+        all_rules_sets = Utils.api("get_all",
+        model="RulesSet",
+        fields=["id", "name"]
+        )
+
+        for rules_set in all_rules_sets:
+
+            layout.append(({"text": [rules_set[1], rules_set[1], rules_set[1], rules_set[1], rules_set[1]], "data": f"0_{rules_set[0]}"},))
+
+        return_button = {"text": self.strings[1][0], "data": "1_0"}
+        layout.append((return_button,))
 
         return [layout, ]
 
@@ -18,12 +27,32 @@ class RulesSetEdit(Screen):
 
     def button_0(self, params, user_id):
 
-        event_id = Utils.api("get_or_make",
+        event_id = Utils.api("get",
+        model="Event",
+        params={"admin_id": user_id, "status": 0},
+        fields=["id",], 
+        )[0][0]
+
+        Utils.api("update", 
+        model="Event",
+        filter_params={"id": event_id},
+        update_params={"rules_set_id": int(params[0])}        
+        )
+
+        return Utils.api("execute_method",
+        model="Event",
+        params={"id": event_id},
+        method={"name": "show_template", "params": []}
+        )[0]
+
+    def button_1(self, params, user_id):
+        
+        event_id = Utils.api("get",
         model="Event",
         params={"admin_id": user_id, "status": 0},
         fields=["id"], 
-        )[0][0]
-
+        )[0][0] 
+        
         return Utils.api("execute_method",
         model="Event",
         params={"id": event_id},

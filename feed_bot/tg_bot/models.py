@@ -28,7 +28,7 @@ class LogicModel(models.Model):
 
         return rv
 
-    created = models.CharField(max_length=512, default=";")
+    created = models.CharField(max_length=512, default=";") # user_id, timestamp
     status = models.IntegerField(default=0)
 
     class Meta:
@@ -41,64 +41,32 @@ class Event(LogicModel):  #TODO move template to different class?
     
     # statuses: 0 - being created, 1 - awaiting start, 2 - ongoing, 3 - between periods, 4 - finished, 5 - cancelled 
     
-    admin_id = models.IntegerField(default=0)
+    admin_id = models.IntegerField(default=-1)
 
-    epoch_scheduled = models.CharField(max_length=5096, default="")
-    epoch_actual = models.CharField(max_length=5096, default="")
+    competition_id = models.IntegerField(default=-1)
+    rules_set_id = models.IntegerField(default=-1)
 
-    competition_id = models.IntegerField(default=0)
-    rules_set_id = models.IntegerField(default=0)
+    date_scheduled =  models.CharField(max_length=5096, default="")
+    time_scheduled = models.CharField(max_length=5096, default="")
+    date_actual = models.CharField(max_length=5096, default="")
+    time_actual = models.CharField(max_length=5096, default="")
 
-    home_team_id = models.IntegerField(default=0)
-    away_team_id = models.IntegerField(default=0)
+    home_team_id = models.IntegerField(default=-1)
+    away_team_id = models.IntegerField(default=-1)
 
     periods_ids = models.CharField(max_length=5096, default=";")
     coin_toss_ids = models.CharField(max_length=5096, default=";")
     timer_ids = models.CharField(max_length=5096, default=";")
 
-    date =  models.CharField(max_length=5096, default=";")
-    time = models.CharField(max_length=5096, default=";")
-
-    delete_competition_name = models.CharField(max_length=512, default="") # TODO DELETE!!!
-    delete_home_team_name = models.CharField(max_length=512, default="")
-    delete_away_team_name = models.CharField(max_length=512, default="")
-    delete_date = models.CharField(max_length=512, default="")
-    delete_time = models.CharField(max_length=512, default="")
-
     def show_template(self): 
 
-        home_team_obj = Team._get_({"id": self.home_team_id})
-        away_team_obj = Team._get_({"id": self.away_team_id})
+        home_team_name = "" if self.home_team_id == -1 else Team._get_({"id": self.home_team_id})[0].name 
+        away_team_name = "" if self.away_team_id == -1 else Team._get_({"id": self.away_team_id})[0].name 
         
-        if len(home_team_obj) == 0:
-            home_team_obj = [Team(),]
-            home_team_obj[0].save()
-        if len(away_team_obj) == 0:
-            away_team_obj = [Team(),]
-            away_team_obj[0].save()
+        competition_name = "" if self.competition_id == -1 else Competition._get_({"id": self.competition_id})[0].name  
+        rules_set_name = "" if self.rules_set_id == -1 else RulesSet._get_({"id": self.rules_set_id})[0].name      
 
-        home_team_name = home_team_obj[0].name 
-        away_team_name = away_team_obj[0].name
-        
-        competition_obj = Competition._get_({"id": self.competition_id})
-        if len(competition_obj) == 0:
-            competition_obj = [Competition(), ]
-            competition_obj[0].save()       
-        
-        competition_name = competition_obj[0].name
-
-        rules_set_obj = RulesSet._get_({"id": self.rules_set_id})[0]
-        rules_set_name = rules_set_obj.name
-
-        
-
-        try:
-            date = time.strftime('%Y-%m-%d %H:%M:%S', self.epoch_scheduled)[0]
-            time_ = time.strftime('%Y-%m-%d %H:%M:%S', self.epoch_scheduled)[0]
-        except:
-            date, time_ = "", ""
-
-        formatters = (str(self.id), self.delete_home_team_name, self.delete_away_team_name, self.delete_competition_name, rules_set_name, self.date, self.time)
+        formatters = (str(self.id), home_team_name, away_team_name, competition_name, rules_set_name, self.date_scheduled, self.time_scheduled)
         
         ready = True
         for x in formatters:
@@ -132,12 +100,11 @@ class Team(LogicModel):
 class Competition(LogicModel): #TODO MOVE FROM DEFAULT DATABASE TO LOGIC (flush dbs?)
 
     name = models.CharField(max_length=512, default="")
-    events_ids = models.CharField(max_length=512, default=";")     
+    events_ids = models.CharField(max_length=512, default=";")
 
 class RulesSet(LogicModel):
     
     name = models.CharField(max_length=512, default="")
-    created_by = models.IntegerField(default=-1)
 
     win_event_by = models.IntegerField(default=0)
     win_period_by = models.CharField(max_length=512, default=';')
@@ -227,7 +194,7 @@ class BotUser(models.Model):
     is_logged_in = models.IntegerField(default=0)
     is_superadmin = models.IntegerField(default=0)
 
-    current_screen_code = models.CharField(max_length=512, default="uk")
+    current_screen_code = models.CharField(max_length=512, default="00")
     screen_messages_ids = models.CharField(max_length=512, default=";")
     remainders_ids = models.CharField(max_length=512, default=";")
 

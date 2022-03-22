@@ -32,7 +32,8 @@ class MainMenu(Screen):
         event_id = Utils.api("get_or_make",
         model="Event",
         params={"admin_id": user_id, "status": 0},
-        fields=["id"], 
+        fields=["id"],
+        by=user_id 
         )[0][0]
 
         rv = Utils.api("execute_method",
@@ -58,14 +59,11 @@ class MainMenu(Screen):
         )[0]
 
     def button_3(self, params, user_id): # language_selection
-        
-        languages_names = []
-        for language in Utils.api("get_all", model="TextLanguage"): languages_names.append(language[1])
-            
+                  
         return Utils.api("execute_method", 
         model="BotUser",
         params={"id": user_id},
-        method={"name": "show_screen_to", "params": ["11", [["",], languages_names]]}
+        method={"name": "show_screen_to", "params": ["11", []]}
         )[0]
 
     def button_4(self, params, user_id): # exit

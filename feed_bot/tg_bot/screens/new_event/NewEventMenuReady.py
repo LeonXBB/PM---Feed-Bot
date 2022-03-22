@@ -62,7 +62,6 @@ class NewEventMenuReady(Screen):
         method={"name": "show_screen_to", "params": ["27", [], ]} #TODO move static formatters into screen class?
         )[0]
 
-
     def button_3(self, params, user_id): # rules set
         return Utils.api("execute_method", 
         model="BotUser",

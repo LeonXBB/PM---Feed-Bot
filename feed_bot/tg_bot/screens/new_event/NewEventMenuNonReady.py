@@ -8,12 +8,12 @@ class NewEventMenuNonReady(Screen):
 
     def get_keyboards(self):
         
-        edit_home_team_name = {"text": self.strings[1][1], "data": "0_0"} # TODO fix INDEXES!
-        edit_away_team_name = {"text": self.strings[1][2], "data": "0_1"}
-        edit_match_date = {"text": self.strings[1][3], "data": "1_0"}
-        edit_match_time = {"text": self.strings[1][4], "data": "1_1"}
-        edit_competition_name = {"text": self.strings[1][5], "data": "2_0"}
-        edit_rules_set = {"text": self.strings[1][0], "data": "3_0"}
+        edit_home_team_name = {"text": self.strings[1][0], "data": "0_0"} # TODO fix INDEXES!
+        edit_away_team_name = {"text": self.strings[1][1], "data": "0_1"}
+        edit_match_date = {"text": self.strings[1][2], "data": "1_0"}
+        edit_match_time = {"text": self.strings[1][3], "data": "1_1"}
+        edit_competition_name = {"text": self.strings[1][4], "data": "2_0"}
+        edit_rules_set = {"text": self.strings[1][5], "data": "3_0"}
         cancel = {"text": self.strings[1][6], "data": "4_0"}
         go_back = {"text": self.strings[1][7], "data": "4_1"}
 

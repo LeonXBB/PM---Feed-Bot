@@ -34,7 +34,7 @@ class EventTimeEdit(Screen):
             Utils.api("update", 
             model="Event",
             filter_params={"id": event_id},
-            update_params={"time": text}        
+            update_params={"time_scheduled": text}        
             )
 
             return Utils.api("execute_method",

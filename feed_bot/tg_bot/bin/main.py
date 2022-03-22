@@ -47,7 +47,9 @@ class FeedBot(TeleBot):
                 for row in layout:
                     keyboard.append(list())
                     for button in row:
-                        button_formatter = data[3][messages_count + len(keyboards)][i] if data[3] is not None and len(data[3]) > messages_count + len(keyboards) and data[3][messages_count + len(keyboards)] is not None else list()
+                        
+                        button_formatter = data[3][messages_count + len(keyboards)][i] if data[3] is not None and len(data[3]) > messages_count + len(keyboards) and data[3][messages_count + len(keyboards)] is not None and len(data[3][messages_count + len(keyboards)]) > i else list()
+                        
                         keyboard[-1].append(InlineKeyboardButton(button["text"][user_language_id].format(button_formatter), callback_data=button["data"]))
                         i += 1
                     
@@ -61,7 +63,7 @@ class FeedBot(TeleBot):
             text = text_dict_index[0][user_language_id]
             texts.append(text)
 
-            formatters = data[3][i] if data[3] is not None and len(data[3]) > i and data[3][i] is not None else list()
+            formatters = data[3][i] if data[3] is not None and len(data[3]) > i and data[3][i] is not None else list() 
             text = texts[i].format(*formatters)
             keyboard = None if len (keyboards) <= i else keyboards[i]
 
@@ -74,7 +76,8 @@ class FeedBot(TeleBot):
         user_id, user_language_id = Utils.api("get_or_make", 
             model="BotUser", 
             fields=["id", "language_id"],
-            params={"tg_id": message["user_id"]}
+            params={"tg_id": message["user_id"]},
+            
         )[0]
 
         if message["mess_type"] == "text":
