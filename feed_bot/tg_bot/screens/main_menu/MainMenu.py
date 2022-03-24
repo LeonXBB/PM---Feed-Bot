@@ -24,11 +24,6 @@ class MainMenu(Screen):
            
     def button_0(self, params, user_id): # new event
         
-        # get or make template
-        # send json to site
-        # check its preparedness
-        # return correct screen
-
         event_id = Utils.api("get_or_make",
         model="Event",
         params={"admin_id": user_id, "status": 0},
@@ -44,18 +39,19 @@ class MainMenu(Screen):
 
         return rv
 
-    def button_1(self, params, user_id): # event list
+    def button_1(self, params, user_id): # events list # TODO WRITE!
         
-        events_ids = Utils.api("get",
-        model="Event",
-        params={"admin_id": user_id},
-        fields=["id"])
-        
+        return Utils.api("execute_method", 
+        model="BotUser",
+        params={"id": user_id},
+        method={"name": "show_screen_to", "params": ["40", []]}
+        )[0]
+
     def button_2(self, params, user_id): # set rules editor # TODO WRITE!
         return Utils.api("execute_method", 
         model="BotUser",
         params={"id": user_id},
-        method={"name": "show_screen_to", "params": ["10", [[config("telebot_version"),],]]}
+        method={"name": "show_screen_to", "params": ["50", []]}
         )[0]
 
     def button_3(self, params, user_id): # language_selection

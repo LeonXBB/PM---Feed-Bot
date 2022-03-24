@@ -8,16 +8,16 @@ class NewEventMenuNonReady(Screen):
 
     def get_keyboards(self):
         
-        edit_home_team_name = {"text": self.strings[1][0], "data": "0_0"} # TODO fix INDEXES!
+        edit_home_team_name = {"text": self.strings[1][0], "data": "0_0"}
         edit_away_team_name = {"text": self.strings[1][1], "data": "0_1"}
         edit_match_date = {"text": self.strings[1][2], "data": "1_0"}
         edit_match_time = {"text": self.strings[1][3], "data": "1_1"}
         edit_competition_name = {"text": self.strings[1][4], "data": "2_0"}
         edit_rules_set = {"text": self.strings[1][5], "data": "3_0"}
-        cancel = {"text": self.strings[1][6], "data": "4_0"}
+        clear = {"text": self.strings[1][6], "data": "4_0"}
         go_back = {"text": self.strings[1][7], "data": "4_1"}
 
-        layout = [(edit_home_team_name, edit_away_team_name), (edit_match_date, edit_match_time), (edit_competition_name, edit_rules_set), (cancel, go_back)]
+        layout = [(edit_home_team_name, edit_away_team_name), (edit_match_date, edit_match_time), (edit_competition_name, edit_rules_set), (clear, go_back)]
         
         return [layout, ]
 
@@ -61,7 +61,6 @@ class NewEventMenuNonReady(Screen):
         method={"name": "show_screen_to", "params": ["27", [], ]} #TODO move static formatters into screen class?
         )[0]
 
-
     def button_3(self, params, user_id): # rules set
         return Utils.api("execute_method", 
         model="BotUser",
@@ -82,7 +81,11 @@ class NewEventMenuNonReady(Screen):
             )[0][0]
         
 
-            Utils.api("update", model="Event", filter_params={"id": event_id}, update_params={"status": 1})
+            Utils.api("update", 
+            model="Event", 
+            filter_params={"id": event_id}, 
+            update_params={"status": 5}
+            )
 
         return Utils.api("execute_method", 
         model="BotUser",

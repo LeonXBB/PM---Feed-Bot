@@ -1,8 +1,10 @@
 from decouple import config
 
+import time
+
 from ...bin.utils import Utils
 from ..Screen import Screen
-
+from ..remainders.Remainder import Remainder
 
 class NewEventMenuReady(Screen):
     
@@ -14,11 +16,11 @@ class NewEventMenuReady(Screen):
         edit_match_time = {"text": self.strings[1][3], "data": "1_1"}
         edit_competition_name = {"text": self.strings[1][4], "data": "2_0"}
         edit_rules_set = {"text": self.strings[1][5], "data": "3_0"}
-        cancel = {"text": self.strings[1][6], "data": "4_0"}
+        clear = {"text": self.strings[1][6], "data": "4_0"}
         go_back = {"text": self.strings[1][7], "data": "4_1"}
         save = {"text": self.strings[1][8], "data": "5_0"}
 
-        layout = [(edit_home_team_name, edit_away_team_name), (edit_match_date, edit_match_time), (edit_competition_name, edit_rules_set), (cancel, go_back), (save,)]
+        layout = [(edit_home_team_name, edit_away_team_name), (edit_match_date, edit_match_time), (edit_competition_name, edit_rules_set), (clear, go_back), (save,)]
         
         return [layout, ]
 
@@ -81,7 +83,7 @@ class NewEventMenuReady(Screen):
             fields=["id"], 
             )[0][0]
 
-            Utils.api("update", model="Event", filter_params={"id": event_id}, update_params={"status": 1})
+            Utils.api("update", model="Event", filter_params={"id": event_id}, update_params={"status": 5})
 
         return Utils.api("execute_method", 
         model="BotUser",
@@ -89,9 +91,37 @@ class NewEventMenuReady(Screen):
         method={"name": "show_screen_to", "params": ["10", [[config("telebot_version")], ], ]} #TODO move static formatters into screen class?
         )[0]
 
-    def button_5(self, params, user_id):
-        return Utils.api("execute_method", 
-        model="BotUser",
-        params={"id": user_id},
-        method={"name": "show_screen_to", "params": ["10", [[config("telebot_version")], ], ]} #TODO move static formatters into screen class?
+    def button_5(self, params, user_id): # save
+
+        event_id, home_team_id, away_team_id = Utils.api("get",
+        model="Event",
+        params={"admin_id": user_id, "status": 0},
+        fields=["id", "home_team_id", "away_team_id"]
         )[0]
+
+        home_team_name = Utils.api("get",
+        model="Team",
+        params={"id": home_team_id},
+        fields=["name",]
+        )[0][0]
+
+        away_team_name = Utils.api("get",
+        model="Team",
+        params={"id": away_team_id},
+        fields=["name",]
+        )[0][0]
+
+        Utils.api("update", 
+        model="Event",
+        filter_params={"id": event_id},
+        update_params={"status": 0}
+        )
+        
+        rv = []
+
+        rv.append(Utils.api("execute_method", model="BotUser", params={"id": user_id}, method={"name": "show_screen_to", "params": ["10", [[config("telebot_version")], ], ]})[0])
+        #TODO move static formatters into screen class?
+
+        rv.extend(Remainder._get_("EventScheduled").schedule([int(time.time()), int(time.time()) + 10], user_id, [[event_id, home_team_name, away_team_name],[]]))
+        
+        return rv

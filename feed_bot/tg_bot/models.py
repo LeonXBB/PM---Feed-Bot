@@ -1,10 +1,8 @@
-from asyncore import read
-from aiohttp import request
 from decouple import config
 
-import hashlib
 from django.db import models
 
+import hashlib
 import time
 
 from .screens.Screen import Screen
@@ -58,6 +56,9 @@ class Event(LogicModel):  #TODO move template to different class?
     coin_toss_ids = models.CharField(max_length=5096, default=";")
     timer_ids = models.CharField(max_length=5096, default=";")
 
+    def make_template(self):
+        pass
+
     def show_template(self): 
 
         home_team_name = "" if self.home_team_id == -1 else Team._get_({"id": self.home_team_id})[0].name 
@@ -78,6 +79,12 @@ class Event(LogicModel):  #TODO move template to different class?
             return BotUser._get_({"id": self.admin_id})[0].show_screen_to("20", [formatters,])
         else:
             return BotUser._get_({"id": self.admin_id})[0].show_screen_to("21", [formatters,])
+
+    def edit_template(self):
+        pass
+
+    def save_template(self):
+        pass
 
     def start(self):
         pass
@@ -195,8 +202,10 @@ class BotUser(models.Model):
     is_superadmin = models.IntegerField(default=0)
 
     current_screen_code = models.CharField(max_length=512, default="00")
-    screen_messages_ids = models.CharField(max_length=512, default=";")
-    remainders_ids = models.CharField(max_length=512, default=";")
+
+    screen_messages_ids = models.CharField(max_length=512, default=f"{{}}")
+    remainders_ids = models.CharField(max_length=512, default=f"{{}}")
+    user_input_messages_ids = models.CharField(max_length=512, default=f"{{}}")
 
     @classmethod
     def _get_(cls, params):
@@ -224,7 +233,7 @@ class BotUser(models.Model):
 
         screen = Screen._get_(id=self.current_screen_code)
             
-        return screen.text(text, self.id)
+        return None if not hasattr(screen, "text") else screen.text(text, self.id) 
 
     def receive_command_from(self, command):
         if not self.check_authorization():
@@ -232,26 +241,44 @@ class BotUser(models.Model):
 
         if command == "/start":
             return self.show_screen_to("10", [[config("telebot_version")], ]) #TODO move static formatters into screen class?
-        elif command.startswirh('/show screen'):
-            if self.is_superadmin:
-                return self.show_screen_to(*command.split(" ")[2:])
+        elif command.startswith('/show_screen'):
+            return self.show_screen_to(*command.split(" ")[1:]) if self.is_superadmin else None
         else:    
             return self.receive_text_from(command)
 
-    def receive_button_press_from(self, button_id, params):
+    def receive_button_press_from(self, button_id, params, remainder_id=None, message_id=None):
         if not self.check_authorization():
             return self.show_screen_to("00")       
-               
-        screen = Screen._get_(id=self.current_screen_code)
-        return getattr(screen, f"button_{button_id}")(params, self.id)
+        
+        if remainder_id is None:
+            
+            screen = Screen._get_(id=self.current_screen_code)
+            return None if not hasattr(screen, f"button_{button_id}") else getattr(screen, f"button_{button_id}")(params, self.id)
+
+        elif remainder_id is not None:
+
+            screen = Remainder._get_(remainder_id=remainder_id)
+            return None if not hasattr(screen, f"button_{button_id}") else getattr(screen, f"button_{button_id}")(params, self.id, message_id)
 
     def show_screen_to(self, screen_id, format_strs=None):
         self.current_screen_code = screen_id
         self.save()
         return [screen_id, "screen", format_strs]
 
-    def send_remainder_to(self, remainder_id, format_strs=None):
-        return [remainder_id, "remainder", format_strs]
+    def send_remainder_to(self, remainder_id, epoch, format_strs=None):
+        return [remainder_id, "remainder", epoch, format_strs]
+
+class ScheduledMessage(models.Model):
+
+    user_id = models.IntegerField(default=-1)
+
+    epoch = models.CharField(max_length=512, default="")
+
+    content_type = models.CharField(max_length=512, default="remainder")
+    content_id = models.IntegerField(default=-1)
+    content_formatters = models.CharField(max_length=512, default="")
+
+    is_sent = models.IntegerField(default=0)
 
 # LOCALIZATION
 class TextString(models.Model): #TODO make connection with outside dictionary

@@ -1,5 +1,4 @@
 from ...bin.utils import Utils
-
 from ..Screen import Screen
 
 

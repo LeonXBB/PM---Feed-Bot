@@ -23,7 +23,7 @@ class Screen():
 
             strings = {}
 
-            all_strings = TextString.objects.all()
+            all_strings = TextString.objects.all().order_by("id")
             for string_ in all_strings:
                 if string_.screen_id == self.screen_id:
                     if string_.position_index not in list(strings.keys()):
@@ -41,7 +41,8 @@ class Screen():
                 res = Utils.api("get",
                 model="TextString",
                 fields=["language_1", "language_2", "language_3", "language_4", "language_5"],
-                params={"screen_id": self.screen_id, "position_index": i}
+                params={"screen_id": self.screen_id, "position_index": i},
+                order_by=["id",]
                 )
                 
                 if len(res) == 0:

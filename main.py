@@ -18,6 +18,7 @@ if __name__ == "__main__":
     def start_bot():
         
         time.sleep(3) # Bot should start after the server
+
         bot = FeedBot()
         bot.run()
 

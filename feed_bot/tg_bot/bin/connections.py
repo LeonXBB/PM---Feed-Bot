@@ -1,11 +1,13 @@
 # TODO update from pooling to webhook (look https://pythondigest.ru/view/23089/ for an example)
 
 from decouple import config
+
 import telebot
+import multiprocess as mp
 
-import requests
+import time
 
-from . import utils
+from .utils import Utils
 
 class Connection:
 
@@ -27,6 +29,12 @@ class Connection:
         pass
 
     def _output_(self):
+        pass
+
+    def _add_(self):
+        pass
+
+    def _delete_(self):
         pass
 
     def __init__(self, parent) -> None:
@@ -64,8 +72,91 @@ class PollingConnection(Connection):
         self.parent.receive(message_data)
 
     def _output_(self, to, what):  
+        
         text_to_send = what[0].replace("\\n", "\n") # \n does not work for strings received from the db
-        return self.parent.send_message(to, text_to_send, reply_markup=what[1]).message_id
+        
+        mess = self.parent.send_message(to, text_to_send, reply_markup=what[1])
+        return mess.message_id
+
+    def _add_(self, user_id, array_name, screen_id, message_id):
+
+        data_raw = Utils.api("get",
+        model="BotUser",
+        params={"id": user_id},
+        fields=[array_name,]
+        )[0][0]
+
+        data = eval(data_raw)
+
+        if screen_id not in list(data.keys()):
+            data[screen_id] = list()
+
+        data[screen_id].append(message_id)
+
+        Utils.api("update", 
+        model="BotUser",
+        filter_params={"id": user_id},
+        update_params={array_name: str(data)}
+        )
+
+    def _delete_(self, user_id, array_name, filter):
+        
+        tg_id, data_raw = Utils.api("get",
+        model="BotUser",
+        params={"id": user_id},
+        fields=["tg_id", array_name]
+        )[0]
+
+        data = eval(data_raw)
+
+        messages_ids = []
+        for k, v in data.copy().items():
+            if not exec(filter):
+                messages_ids = data.pop(k)
+        
+        for message_id in messages_ids:
+            try:
+                self.parent.delete_message(tg_id, message_id)
+            except Exception as e:
+                print(e)
+
+        Utils.api("update", 
+        model="BotUser",
+        filter_params={"id": user_id},
+        update_params={array_name: str(data)}
+        )
+
+    def run_schedule(self, parent):
+
+        Utils.init_screens("bot") #TODO fix
+
+        while True:
+
+            scheduled_messages = Utils.api("get",
+            model="ScheduledMessage",
+            params={"is_sent": 0},
+            fields=["id", "user_id", "epoch", "content_type", "content_id", "content_formatters"]
+            )
+
+            if type(scheduled_messages) is list and len(scheduled_messages) > 0 and scheduled_messages[0] != 0:
+                for scheduled_message in scheduled_messages:
+
+                    if int(scheduled_message[2]) <= int(time.time()):
+
+                        tg_id = Utils.api("get", 
+                        model="BotUser",
+                        params={"id": scheduled_message[1]},
+                        fields=["tg_id",])[0][0]
+
+                        Utils.api("update",
+                        model="ScheduledMessage",
+                        filter_params={"id": scheduled_message[0]},
+                        update_params={"is_sent": 1}
+                        )
+
+                        parent.process_received({"user_id": tg_id}, [[str(scheduled_message[4]), "scheduled", eval(scheduled_message[5])],])
+
+            time.sleep(int(config("telebot_scheduled_messages_update_interval")))
 
     def __init__(self, parent) -> None:
         super().__init__(parent)
@@ -73,14 +164,14 @@ class PollingConnection(Connection):
         @self.parent.message_handler(func=lambda message: True)
         @self.parent.callback_query_handler(func=lambda message: True)
         def handler(message):
-            #json_dict={"task": "update", "id": message.from_user.id, "text": message.text}
-            #requests.post(config("server_address"), data=json_dict)
-            #requests.post(f"{config('server_address')}/new_ind", data=json_dict)
             self._input_(message)
 
     def run(self):
-        self.parent.infinity_polling()
 
+        scheduling = mp.Process(target=self.run_schedule, name="scheduling", args=(self.parent, ))
+        scheduling.start()
+
+        self.parent.infinity_polling()
 
 class WebHookConnection(Connection):
     
@@ -91,6 +182,12 @@ class WebHookConnection(Connection):
         raise NotImplemented("Web hook connection option is not written yet!")
 
     def _output_(self):
+        raise NotImplemented("Web hook connection option is not written yet!")
+
+    def _add_(self):
+        raise NotImplemented("Web hook connection option is not written yet!")
+
+    def _delete_(self):
         raise NotImplemented("Web hook connection option is not written yet!")
 
     def __init__(self, parent) -> None:

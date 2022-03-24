@@ -7,11 +7,12 @@ from django.views.generic import TemplateView
 from django.utils.decorators import method_decorator
 from django.views.decorators.csrf import csrf_exempt
 
-from .bin.utils import Utils
-
 import time
 
+from .bin.utils import Utils
 from . import models
+from .screens.Screen import Screen
+
 # Create your views here.
 
 @method_decorator(csrf_exempt, name="dispatch")
@@ -26,7 +27,13 @@ class BotAPI(TemplateView):
         if task == "get":
 
             def init():
-                return getattr(models, data["model"]), list(getattr(models, data["model"]).objects.all())
+
+                if "order_by" not in list(data.keys()):
+                    data["order_by"] = ["id",]
+
+                obj_class = getattr(models, data["model"])
+                query_set = list(obj_class.objects.all().order_by(*data["order_by"]))
+                return obj_class, query_set
             
             def filter_set():
                 
@@ -56,7 +63,13 @@ class BotAPI(TemplateView):
         elif task == "get_fields":
 
             def init():
-                return getattr(models, data["model"]), list(getattr(models, data["model"]).objects.all())
+
+                if "order_by" not in list(data.keys()):
+                    data["order_by"] = ["id",]
+
+                obj_class = getattr(models, data["model"])
+                query_set = list(obj_class.objects.all().order_by(*data["order_by"]))
+                return obj_class, query_set
             
             obj_class, wrong_rv = init()
 
@@ -67,7 +80,13 @@ class BotAPI(TemplateView):
         elif task == "get_all":
 
             def init():
-                return getattr(models, data["model"]), list(getattr(models, data["model"]).objects.all())
+
+                if "order_by" not in list(data.keys()):
+                    data["order_by"] = ["id",]
+
+                obj_class = getattr(models, data["model"])
+                query_set = list(obj_class.objects.all().order_by(*data["order_by"]))
+                return obj_class, query_set
             
             def filter_set():
                 
@@ -94,7 +113,13 @@ class BotAPI(TemplateView):
         elif task == "get_or_make":
 
             def init():
-                return getattr(models, data["model"]), list(getattr(models, data["model"]).objects.all())
+
+                if "order_by" not in list(data.keys()):
+                    data["order_by"] = ["id",]
+
+                obj_class = getattr(models, data["model"])
+                query_set = list(obj_class.objects.all().order_by(*data["order_by"]))
+                return obj_class, query_set
             
             def make_new(): # SEND WHAT YOU WANT TO SET (IF MAKE) IN PARAMS, WHAT YOU WANT TO RECEIVE (ANY CASE) IN FIELDS #TODO write proper documentation 
                 
@@ -141,7 +166,13 @@ class BotAPI(TemplateView):
         elif task == "update":
 
             def init():
-                return getattr(models, data["model"]), list(getattr(models, data["model"]).objects.all())
+
+                if "order_by" not in list(data.keys()):
+                    data["order_by"] = ["id",]
+
+                obj_class = getattr(models, data["model"])
+                query_set = list(obj_class.objects.all().order_by(*data["order_by"]))
+                return obj_class, query_set
 
             def filter_set():
                 
@@ -177,7 +208,13 @@ class BotAPI(TemplateView):
         elif task == "execute_method":
 
             def init():
-                return getattr(models, data["model"]), list(getattr(models, data["model"]).objects.all())            
+
+                if "order_by" not in list(data.keys()):
+                    data["order_by"] = ["id",]
+
+                obj_class = getattr(models, data["model"])
+                query_set = list(obj_class.objects.all().order_by(*data["order_by"]))
+                return obj_class, query_set   
 
             def filter_set():
                 
