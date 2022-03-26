@@ -1,3 +1,4 @@
+from re import L, M
 from telebot import TeleBot
 from telebot.types import InlineKeyboardButton, InlineKeyboardMarkup
 
@@ -31,8 +32,6 @@ class FeedBot(TeleBot):
         elif data[2] == "scheduled":
             obj = Remainder._get_(screen_id=data[1])        
 
-        print(data, obj)
-
         user_tg_id = data[0][0]
         user_language_id = data[0][1]
         
@@ -53,7 +52,6 @@ class FeedBot(TeleBot):
                         
                         button_formatter = data[3][messages_count + len(keyboards)][i] if data[3] is not None and len(data[3]) > messages_count + len(keyboards) and data[3][messages_count + len(keyboards)] is not None and len(data[3][messages_count + len(keyboards)]) > i else list()
                         
-                        print(button)
                         keyboard[-1].append(InlineKeyboardButton(button["text"][user_language_id].format(button_formatter), callback_data=button["data"]))
                         i += 1
                     
@@ -101,9 +99,11 @@ class FeedBot(TeleBot):
             method={"name": "receive_command_from", "params": [message["mess_content"], ]}
             )
 
-        elif message["mess_type"] == "button" and not message["mess_content"].startswith("r"):
+        elif message["mess_type"] == "button" and not message["mess_content"][0].startswith("r_"):
             
-            split_content = message["mess_content"].split("_")
+            self.answer_callback_query(message["mess_id"])
+
+            split_content = message["mess_content"][0].split("_")
             button_id = split_content[0]
             params = split_content[1:]
             
@@ -113,25 +113,41 @@ class FeedBot(TeleBot):
             method={"name": "receive_button_press_from", "params": [button_id, params]}
             )
 
-        elif message["mess_type"] == "button" and message["mess_content"].startswith("r"):
+        elif message["mess_type"] == "button" and message["mess_content"][0].startswith("r_"):
             
-            split_content = message["mess_content"].split("_")
-            button_id = split_content[1]
+            self.answer_callback_query(message["mess_id"])
+
+            split_content = message["mess_content"][0].split("_")
+            button_id = split_content[1] # number
             remainder_id = split_content[2]
+            message_id = message["mess_content"][1] # tg bot message
             params = split_content[3:]
-              
+            
+            scheduled_messages = Utils.api("get_all",
+            model="ScheduledMessage",
+            fields=["id", "messages_ids"])
+
+            for scheduled_message in scheduled_messages:
+                for bot_message_id in scheduled_message[1].split(";"):
+                    if bot_message_id:
+                        print(bot_message_id, message_id)
+                        if int(bot_message_id) == int(message_id):
+                            scheduled_message_id = scheduled_message[0]
+
             reply = Utils.api("execute_method", 
             model="BotUser",
             params={"id": user_id},
-            method={"name": "receive_button_press_from", "params": [button_id, params]}
+            method={"name": "receive_button_press_from", "params": [button_id, params, remainder_id, message_id, scheduled_message_id]}
             )        
-        
+                  
+            if remainder_id.startswith("0"): remainder_id = f"1{remainder_id}"
+            self.connection._delete_(user_id, "remainders_ids", f"k == str({remainder_id}) and v == int({message_id})")
+
         if message["mess_type"] != "button": 
-            self.connection._add_(user_id, "user_input_messages_ids", str(user_current_screen_code), message["mess_id"])
-            self.connection._delete_(user_id, "user_input_messages_ids", f"k == {(user_current_screen_code)}")
+            self.connection._add_(user_id, "user_input_messages_ids", user_current_screen_code, message["mess_id"])
+            self.connection._delete_(user_id, "user_input_messages_ids", f"int(k) == int({user_current_screen_code})")
 
         if reply is not None and hasattr(reply, "__len__") and len(reply) > 0 and reply[0] is not None:
-
             self.process_received(message, reply)
 
     def process_received(self, message, reply):
@@ -145,7 +161,7 @@ class FeedBot(TeleBot):
         if type(reply) is list and len(reply) > 0 and type(reply[0]) is list and len(reply[0]) > 0 and type(reply[0][0]) is list:
             reply = reply[0] # TODO fix this hack for when we have remainders, as api.execute_method adds its own list 
 
-        for screen_data in reply:
+        for i, screen_data in enumerate(reply):
 
             if screen_data[1] != "remainder":
 
@@ -156,7 +172,7 @@ class FeedBot(TeleBot):
                 if screen_data[2] == "screen":
 
                     # delete previous screen
-                    self.connection._delete_(user_id, "screen_messages_ids", f"k != {user_current_screen_code}")
+                    if i == 0: self.connection._delete_(user_id, "screen_messages_ids", f"k != {user_current_screen_code}")
 
                     # add current screen to user field
                     for new_message_id in new_messages_ids:
@@ -167,10 +183,16 @@ class FeedBot(TeleBot):
                     for new_message_id in new_messages_ids:
                         self.connection._add_(user_id, "remainders_ids", screen_data[1], new_message_id)
 
+                    Utils.api("update",
+                    model="ScheduledMessage",
+                    filter_params={"id": screen_data[4]},
+                    update_params={"messages_ids": ";".join(str(x) for x in new_messages_ids)}
+                    )
+
             else:
                 
                 Utils.api("get_or_make",
                 model="ScheduledMessage",
-                params={"user_id": user_id, "epoch": screen_data[2], "content_type": "Remainder", "content_id": screen_data[0], "content_formatters": screen_data[3], "is_sent": 0},
+                params={"user_id": user_id, "epoch": screen_data[2], "content_type": "Remainder", "content_id": screen_data[0], "content_formatters": screen_data[3], "is_sent": 0, "is_active": 1, "group_name": screen_data[4]},
                 fields=[]
                 )

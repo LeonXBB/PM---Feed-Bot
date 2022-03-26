@@ -44,10 +44,11 @@ class MainMenu(Screen):
         return Utils.api("execute_method", 
         model="BotUser",
         params={"id": user_id},
-        method={"name": "show_screen_to", "params": ["40", []]}
+        method={"name": "show_list_of_events", "params": []}
         )[0]
 
     def button_2(self, params, user_id): # set rules editor # TODO WRITE!
+        
         return Utils.api("execute_method", 
         model="BotUser",
         params={"id": user_id},

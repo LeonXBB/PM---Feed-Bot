@@ -33,7 +33,7 @@ class LogicModel(models.Model):
         abstract = True
 
     def _cancel_(self):
-        self.status ="Cancelled"
+        self.status = 5
 
 class Event(LogicModel):  #TODO move template to different class?
     
@@ -83,21 +83,36 @@ class Event(LogicModel):  #TODO move template to different class?
     def edit_template(self):
         pass
 
+    def cancel_edit(self):
+        pass
+
     def save_template(self):
+        pass
+
+    def cancel_save(self):
         pass
 
     def start(self):
         pass
 
+    def cancel_start(self):
+        pass
+
     def end(self):
+        pass
+
+    def cancel_end(self):
         pass
 
     def run(self):
         pass
 
-    def cancel(self):
+    def cancel_run(self):
         self._cancel_()
         pass
+
+    def cancel_event(self):
+        super()._cancel_()
 
 class Team(LogicModel):
     
@@ -246,7 +261,7 @@ class BotUser(models.Model):
         else:    
             return self.receive_text_from(command)
 
-    def receive_button_press_from(self, button_id, params, remainder_id=None, message_id=None):
+    def receive_button_press_from(self, button_id, params, remainder_id=None, message_id=None, scheduled_message_id=None):
         if not self.check_authorization():
             return self.show_screen_to("00")       
         
@@ -257,28 +272,70 @@ class BotUser(models.Model):
 
         elif remainder_id is not None:
 
-            screen = Remainder._get_(remainder_id=remainder_id)
-            return None if not hasattr(screen, f"button_{button_id}") else getattr(screen, f"button_{button_id}")(params, self.id, message_id)
+            screen = Remainder._get_(remainder_id=str(remainder_id))
+            return None if not hasattr(screen, f"button_{button_id}") else getattr(screen, f"button_{button_id}")(params, self.id, message_id, scheduled_message_id)
 
     def show_screen_to(self, screen_id, format_strs=None):
         self.current_screen_code = screen_id
         self.save()
         return [screen_id, "screen", format_strs]
 
-    def send_remainder_to(self, remainder_id, epoch, format_strs=None):
-        return [remainder_id, "remainder", epoch, format_strs]
+    def send_remainder_to(self, remainder_id, epoch, format_strs=None, group=""):
+        return [remainder_id, "remainder", epoch, format_strs, group]
+
+    def show_list_of_events(self):
+
+        status_strings = []
+        for text_string in TextString.objects.all().order_by("id"):
+            if text_string.screen_id == "status":
+                status_strings.append([text_string.language_1, text_string.language_2, text_string.language_3, text_string.language_4, text_string.language_5])
+
+        rv = []
+        
+        for event in Event.objects.all():
+
+            if event.admin_id == self.id:
+                
+                home_team_name = Team.objects.get(pk=event.home_team_id).name
+                away_team_name = Team.objects.get(pk=event.away_team_id).name
+
+                competition_name = Competition.objects.get(pk=event.competition_id).name
+
+                rules_set_name = RulesSet.objects.get(pk=event.rules_set_id).name
+
+                date = event.date_actual if event.date_actual is not "" else event.date_scheduled
+                time_ = event.time_actual if event.time_actual is not "" else event.time_scheduled
+
+                if event.status != "5":
+                    rv.append(self.show_screen_to("43", [[event.id, status_strings[5][self.language_id], home_team_name, away_team_name, competition_name, rules_set_name, date, time_]]))
+                else:
+                    rv.append(self.show_screen_to("44", [[event.id, status_strings[5][self.language_id], home_team_name, away_team_name, competition_name, rules_set_name, date, time_]]))
+
+                
+
+        if len(rv) > 0:
+            rv.append(self.show_screen_to("40", [[], ]))
+        else: 
+            rv.append(self.show_screen_to("41", [[], ]))
+
+        return rv
 
 class ScheduledMessage(models.Model):
 
     user_id = models.IntegerField(default=-1)
+    messages_ids = models.CharField(max_length=512, default=";")
 
     epoch = models.CharField(max_length=512, default="")
+    pause_epoch = models.CharField(max_length=512, default="")
 
     content_type = models.CharField(max_length=512, default="remainder")
     content_id = models.IntegerField(default=-1)
     content_formatters = models.CharField(max_length=512, default="")
 
     is_sent = models.IntegerField(default=0)
+    is_active = models.IntegerField(default=1)
+
+    group_name = models.CharField(max_length=512, default="")
 
 # LOCALIZATION
 class TextString(models.Model): #TODO make connection with outside dictionary

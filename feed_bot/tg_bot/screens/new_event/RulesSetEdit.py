@@ -4,7 +4,7 @@ from ..Screen import Screen
 
 class RulesSetEdit(Screen):
 
-    def get_keyboards(self): # TODO do not forget to update the keyboard list when we allow users to make their own rules sets
+    def get_keyboards(self): # TODO do not forget to (dynamically) update the keyboard list when we allow users to make their own rules sets
         
         layout = []
 

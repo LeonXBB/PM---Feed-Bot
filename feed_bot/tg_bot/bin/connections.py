@@ -54,14 +54,15 @@ class PollingConnection(Connection):
             mess_id =  message.message_id
             mess_type = "text"
             mess_content = message.text
-        elif  type(message) == telebot.types.Message and message.text.startswith("/"):
+        elif type(message) == telebot.types.Message and message.text.startswith("/"):
             mess_id =  message.message_id
             mess_type = "command"
             mess_content = message.text
         elif type(message) == telebot.types.CallbackQuery:
             mess_id =  message.id
             mess_type = "button"
-            mess_content = message.data
+            mess_content = [message.data, message.message.message_id]
+
         else: # TODO think about adding support for other types
             mess_id = -1
             mess_type = "other"
@@ -110,13 +111,15 @@ class PollingConnection(Connection):
         data = eval(data_raw)
 
         messages_ids = []
-        for k, v in data.copy().items():
-            if not exec(filter):
-                messages_ids = data.pop(k)
-        
+        for k, val in data.copy().items():
+            for i, v in enumerate(val):
+                if eval(filter):
+                    messages_ids.append(data[k][i])
+                    del data[k][i]
+
         for message_id in messages_ids:
             try:
-                self.parent.delete_message(tg_id, message_id)
+                self.parent.delete_message(tg_id, int(message_id))
             except Exception as e:
                 print(e)
 
@@ -126,7 +129,7 @@ class PollingConnection(Connection):
         update_params={array_name: str(data)}
         )
 
-    def run_schedule(self, parent):
+    def run_schedule(self, parent): #TODO make schedule as separate "driver"
 
         Utils.init_screens("bot") #TODO fix
 
@@ -134,7 +137,7 @@ class PollingConnection(Connection):
 
             scheduled_messages = Utils.api("get",
             model="ScheduledMessage",
-            params={"is_sent": 0},
+            params={"is_sent": 0, "is_active": 1},
             fields=["id", "user_id", "epoch", "content_type", "content_id", "content_formatters"]
             )
 
@@ -154,9 +157,9 @@ class PollingConnection(Connection):
                         update_params={"is_sent": 1}
                         )
 
-                        parent.process_received({"user_id": tg_id}, [[str(scheduled_message[4]), "scheduled", eval(scheduled_message[5])],])
+                        parent.process_received({"user_id": tg_id}, [[str(scheduled_message[4]), "scheduled", eval(scheduled_message[5]), scheduled_message[0]],])
 
-            time.sleep(int(config("telebot_scheduled_messages_update_interval")))
+            time.sleep(int(config("telebot_scheduled_messages_update_interval"))) #TODO add outside control - instead of sleeping the whole time, sleep 1 second and check flags in "parent" (run now / pause)
 
     def __init__(self, parent) -> None:
         super().__init__(parent)

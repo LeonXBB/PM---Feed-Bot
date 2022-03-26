@@ -122,6 +122,6 @@ class NewEventMenuReady(Screen):
         rv.append(Utils.api("execute_method", model="BotUser", params={"id": user_id}, method={"name": "show_screen_to", "params": ["10", [[config("telebot_version")], ], ]})[0])
         #TODO move static formatters into screen class?
 
-        rv.extend(Remainder._get_("EventScheduled").schedule([int(time.time()), int(time.time()) + 10], user_id, [[event_id, home_team_name, away_team_name],[]]))
+        rv.extend(Remainder._get_("EventScheduled").schedule([int(time.time()), int(time.time()) + 15], user_id, [[event_id, home_team_name, away_team_name],[]], f"event_{event_id}"))
         
         return rv
