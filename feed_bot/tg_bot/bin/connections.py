@@ -1,5 +1,6 @@
 # TODO update from pooling to webhook (look https://pythondigest.ru/view/23089/ for an example)
 
+from turtle import pen
 from decouple import config
 
 import telebot
@@ -111,15 +112,18 @@ class PollingConnection(Connection):
         data = eval(data_raw)
 
         messages_ids = []
-        for k, val in data.copy().items():
+        for k, val in data.items():
             for i, v in enumerate(val):
                 if eval(filter):
                     messages_ids.append(data[k][i])
-                    del data[k][i]
+                    #data[k].pop(i)
 
         for message_id in messages_ids:
             try:
                 self.parent.delete_message(tg_id, int(message_id))
+                for k, val in data.copy().items():
+                    if message_id in val:
+                        data[k].remove(message_id)
             except Exception as e:
                 print(e)
 

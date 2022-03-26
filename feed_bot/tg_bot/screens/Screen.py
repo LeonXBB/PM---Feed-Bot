@@ -1,7 +1,5 @@
 from decouple import config
 
-import requests
-
 from ..bin.utils import Utils
 
 class Screen():

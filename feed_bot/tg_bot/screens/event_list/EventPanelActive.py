@@ -1,3 +1,4 @@
+from ...bin.utils import Utils
 from ..Screen import Screen
 
 
@@ -5,8 +6,8 @@ class EventPanelActive(Screen):
 
     def get_keyboards(self):
             
-            cancel = {"text": self.strings[1][0], "data": "0_0"}
-            control_panel = {"text": self.strings[1][1], "data": "1_0"}
+            cancel = {"text": self.strings[1][0], "data": "d_43_0_{}"}
+            control_panel = {"text": self.strings[1][1], "data": "d_43_1_{}"}
 
             layout = [(cancel, control_panel), ]
     
@@ -17,8 +18,16 @@ class EventPanelActive(Screen):
 
     def button_0(self, params, user_id):
         
-        print(0)
-
+        return Utils.api("execute_method",
+        model="Event",
+        params={"id": int(params[0])},
+        method={"name": "cancel", "params": ["event",]}
+        )[0]
+        
     def button_1(self, params, user_id):
         
-        print(1)
+        return Utils.api("execute_method",
+        model="Event",
+        params={"id": int(params[0])},
+        method={"name": "show_match_template", "params": []}
+        )[0]

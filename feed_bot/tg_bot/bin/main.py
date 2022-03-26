@@ -24,8 +24,8 @@ class FeedBot(TeleBot):
         print(f"Feed Bot running with connection {str(self.connection)}") #TODO change to logger
         self.connection.run()
 
-    def send(self, data): # _user_id_, id(text, keyboard), __type__, formatters
-    
+    def send(self, data): # user(tg_id, language_id), id(text, keyboard), __type__, formatters, dynamic button_values
+       
         obj = None
         if data[2] == "screen":
             obj = Screen._get_(id=data[1])        
@@ -51,8 +51,10 @@ class FeedBot(TeleBot):
                     for button in row:
                         
                         button_formatter = data[3][messages_count + len(keyboards)][i] if data[3] is not None and len(data[3]) > messages_count + len(keyboards) and data[3][messages_count + len(keyboards)] is not None and len(data[3][messages_count + len(keyboards)]) > i else list()
+
+                        callback_formatter = data[4][len(keyboards)][i] if data[4] is not None and len(data[4]) > len(keyboards) and data[4][len(keyboards)] is not None and len(data[4][len(keyboards)]) > i else list()
                         
-                        keyboard[-1].append(InlineKeyboardButton(button["text"][user_language_id].format(button_formatter), callback_data=button["data"]))
+                        keyboard[-1].append(InlineKeyboardButton(button["text"][user_language_id].format(button_formatter), callback_data=button["data"].format(callback_formatter)))
                         i += 1
                     
                 keyboards.append(InlineKeyboardMarkup(keyboard))
@@ -99,7 +101,7 @@ class FeedBot(TeleBot):
             method={"name": "receive_command_from", "params": [message["mess_content"], ]}
             )
 
-        elif message["mess_type"] == "button" and not message["mess_content"][0].startswith("r_"):
+        elif message["mess_type"] == "button" and not message["mess_content"][0].startswith("r_") and not message["mess_content"][0].startswith("d_"):
             
             self.answer_callback_query(message["mess_id"])
 
@@ -110,7 +112,7 @@ class FeedBot(TeleBot):
             reply = Utils.api("execute_method", 
             model="BotUser",
             params={"id": user_id},
-            method={"name": "receive_button_press_from", "params": [button_id, params]}
+            method={"name": "receive_button_press_from", "params": [button_id, params, "screen"]}
             )
 
         elif message["mess_type"] == "button" and message["mess_content"][0].startswith("r_"):
@@ -130,18 +132,32 @@ class FeedBot(TeleBot):
             for scheduled_message in scheduled_messages:
                 for bot_message_id in scheduled_message[1].split(";"):
                     if bot_message_id:
-                        print(bot_message_id, message_id)
                         if int(bot_message_id) == int(message_id):
                             scheduled_message_id = scheduled_message[0]
 
             reply = Utils.api("execute_method", 
             model="BotUser",
             params={"id": user_id},
-            method={"name": "receive_button_press_from", "params": [button_id, params, remainder_id, message_id, scheduled_message_id]}
+            method={"name": "receive_button_press_from", "params": [button_id, params, "remainder", remainder_id, scheduled_message_id]}
             )        
                   
             if remainder_id.startswith("0"): remainder_id = f"1{remainder_id}"
             self.connection._delete_(user_id, "remainders_ids", f"k == str({remainder_id}) and v == int({message_id})")
+
+        elif message["mess_type"] == "button" and message["mess_content"][0].startswith("d_"):
+            
+            self.answer_callback_query(message["mess_id"])
+
+            split_content = message["mess_content"][0].split("_")
+            screen_id = split_content[1]
+            button_id = split_content[2]
+            params = split_content[3:]
+            
+            reply = Utils.api("execute_method", 
+            model="BotUser",
+            params={"id": user_id},
+            method={"name": "receive_button_press_from", "params": [button_id, params, "screen", screen_id]}
+            )
 
         if message["mess_type"] != "button": 
             self.connection._add_(user_id, "user_input_messages_ids", user_current_screen_code, message["mess_id"])
@@ -152,14 +168,32 @@ class FeedBot(TeleBot):
 
     def process_received(self, message, reply):
 
-        user_id, user_language_id, user_current_screen_code = Utils.api("get", 
+        user_id, user_language_id, = Utils.api("get", 
             model="BotUser", 
-            fields=["id", "language_id", "current_screen_code"],
+            fields=["id", "language_id"],
             params={"tg_id": message["user_id"]}
         )[0]
 
         if type(reply) is list and len(reply) > 0 and type(reply[0]) is list and len(reply[0]) > 0 and type(reply[0][0]) is list:
             reply = reply[0] # TODO fix this hack for when we have remainders, as api.execute_method adds its own list 
+
+        screens_ids = []
+        ignore_ids = []
+        add_ids = []
+
+        if len(reply) > 1 and type(reply[-1][0]) is str and all(type(x) is int for x in reply[-1][1:]):
+            eval(f"{reply[-1][0]}_ids.extend({reply[-1][1:]})")
+            reply = reply[:-1]
+
+        screens_ids.extend(add_ids)
+        for screen_data in reply:
+            if int(screen_data[0]) not in ignore_ids: screens_ids.append(screen_data[0])
+
+        if screen_data[1] == "screen" and len(reply) > 1:
+            for i, screen_data in enumerate(reply):
+            
+                # delete previous screens for complicated menus
+                self.connection._delete_(user_id, "screen_messages_ids", f"str(k) not in {screens_ids}")  
 
         for i, screen_data in enumerate(reply):
 
@@ -171,12 +205,12 @@ class FeedBot(TeleBot):
 
                 if screen_data[2] == "screen":
 
-                    # delete previous screen
-                    if i == 0: self.connection._delete_(user_id, "screen_messages_ids", f"k != {user_current_screen_code}")
+                    # delete previous screens
+                    if len(reply) == 1: self.connection._delete_(user_id, "screen_messages_ids", f"str(k) not in {screens_ids}")                    
 
                     # add current screen to user field
                     for new_message_id in new_messages_ids:
-                        self.connection._add_(user_id, "screen_messages_ids", str(user_current_screen_code), new_message_id)
+                        self.connection._add_(user_id, "screen_messages_ids", screen_data[1], new_message_id)
                     
                 elif screen_data[2] == "scheduled":
                     

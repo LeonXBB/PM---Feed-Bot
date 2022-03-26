@@ -56,6 +56,9 @@ class Event(LogicModel):  #TODO move template to different class?
     coin_toss_ids = models.CharField(max_length=5096, default=";")
     timer_ids = models.CharField(max_length=5096, default=";")
 
+
+    # CREATE TEMPLATE 
+
     def make_template(self):
         pass
 
@@ -83,7 +86,7 @@ class Event(LogicModel):  #TODO move template to different class?
     def edit_template(self):
         pass
 
-    def cancel_edit(self):
+    def cancel_edit_template(self):
         pass
 
     def save_template(self):
@@ -92,27 +95,47 @@ class Event(LogicModel):  #TODO move template to different class?
     def cancel_save(self):
         pass
 
-    def start(self):
-        pass
+    # MATCH TEMPLATE
 
-    def cancel_start(self):
-        pass
+    def show_match_template(self):
+        print(f"showing match template for event # {self.id}")
+        return BotUser._get_({"id": self.admin_id})[0].show_list_of_events()
 
-    def end(self):
-        pass
-
-    def cancel_end(self):
-        pass
+    # LOGIC
 
     def run(self):
+
+        def start():
+            pass
+
+        def end():
+            pass
+
         pass
 
-    def cancel_run(self):
-        self._cancel_()
-        pass
+    def cancel(self, task):
 
-    def cancel_event(self):
-        super()._cancel_()
+        def cancel_event():
+            self.status = 5
+            self.save()
+            return BotUser._get_({"id": self.admin_id})[0].show_list_of_events(True)
+
+        def cancel_cancel_event():
+            self.status = 0 #TODO figure out how to figure this out
+            self.save()
+            return BotUser._get_({"id": self.admin_id})[0].show_list_of_events(True)
+
+        def cancel_run():
+            pass
+
+        def cancel_start():
+            pass
+
+        def cancel_end():
+            pass
+
+        print(f"cancelling {task}...")
+        return eval(f"cancel_{task}()")
 
 class Team(LogicModel):
     
@@ -261,29 +284,31 @@ class BotUser(models.Model):
         else:    
             return self.receive_text_from(command)
 
-    def receive_button_press_from(self, button_id, params, remainder_id=None, message_id=None, scheduled_message_id=None):
+    def receive_button_press_from(self, button_id, params, screen_type, screen_id="", scheduled_message_id=None):
+        
         if not self.check_authorization():
             return self.show_screen_to("00")       
         
-        if remainder_id is None:
+        if screen_type == "screen":
             
-            screen = Screen._get_(id=self.current_screen_code)
+            screen = Screen._get_(id=self.current_screen_code if screen_id == "" else str(screen_id))
+
             return None if not hasattr(screen, f"button_{button_id}") else getattr(screen, f"button_{button_id}")(params, self.id)
 
-        elif remainder_id is not None:
+        elif screen_type == "remainder":
 
-            screen = Remainder._get_(remainder_id=str(remainder_id))
-            return None if not hasattr(screen, f"button_{button_id}") else getattr(screen, f"button_{button_id}")(params, self.id, message_id, scheduled_message_id)
+            screen = Remainder._get_(remainder_id=str(screen_id))
+            return None if not hasattr(screen, f"button_{button_id}") else getattr(screen, f"button_{button_id}")(params, self.id, scheduled_message_id)
 
-    def show_screen_to(self, screen_id, format_strs=None):
+    def show_screen_to(self, screen_id, format_strs=None, callback_data=None):
         self.current_screen_code = screen_id
         self.save()
-        return [screen_id, "screen", format_strs]
+        return [screen_id, "screen", format_strs, callback_data]
 
     def send_remainder_to(self, remainder_id, epoch, format_strs=None, group=""):
         return [remainder_id, "remainder", epoch, format_strs, group]
 
-    def show_list_of_events(self):
+    def show_list_of_events(self, flush_safe=False):
 
         status_strings = []
         for text_string in TextString.objects.all().order_by("id"):
@@ -291,7 +316,7 @@ class BotUser(models.Model):
                 status_strings.append([text_string.language_1, text_string.language_2, text_string.language_3, text_string.language_4, text_string.language_5])
 
         rv = []
-        
+
         for event in Event.objects.all():
 
             if event.admin_id == self.id:
@@ -303,20 +328,20 @@ class BotUser(models.Model):
 
                 rules_set_name = RulesSet.objects.get(pk=event.rules_set_id).name
 
-                date = event.date_actual if event.date_actual is not "" else event.date_scheduled
-                time_ = event.time_actual if event.time_actual is not "" else event.time_scheduled
+                date = event.date_actual if event.date_actual != "" else event.date_scheduled
+                time_ = event.time_actual if event.time_actual != "" else event.time_scheduled
 
-                if event.status != "5":
-                    rv.append(self.show_screen_to("43", [[event.id, status_strings[5][self.language_id], home_team_name, away_team_name, competition_name, rules_set_name, date, time_]]))
+                if event.status != 5:
+                    rv.append(self.show_screen_to("43", [[event.id, status_strings[event.status][self.language_id], home_team_name, away_team_name, competition_name, rules_set_name, date, time_]], [[event.id, event.id],]))
                 else:
-                    rv.append(self.show_screen_to("44", [[event.id, status_strings[5][self.language_id], home_team_name, away_team_name, competition_name, rules_set_name, date, time_]]))
-
-                
+                    rv.append(self.show_screen_to("44", [[event.id, status_strings[5][self.language_id], home_team_name, away_team_name, competition_name, rules_set_name, date, time_]], [[event.id, event.id],]))
 
         if len(rv) > 0:
             rv.append(self.show_screen_to("40", [[], ]))
         else: 
             rv.append(self.show_screen_to("41", [[], ]))
+
+        if flush_safe: rv.append(("ignore", 40, 43, 44))
 
         return rv
 

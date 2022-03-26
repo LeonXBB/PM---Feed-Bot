@@ -95,5 +95,5 @@ class Remainder(Screen):
         update_params={"group_name": ""}
         )
 
-    def button_0(self, params, user_id, message_id, scheduled_message_id):
+    def button_0(self, params, user_id, scheduled_message_id):
         pass
