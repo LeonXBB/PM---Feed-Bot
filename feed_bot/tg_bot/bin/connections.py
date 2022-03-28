@@ -142,7 +142,7 @@ class PollingConnection(Connection):
             scheduled_messages = Utils.api("get",
             model="ScheduledMessage",
             params={"is_sent": 0, "is_active": 1},
-            fields=["id", "user_id", "epoch", "content_type", "content_id", "content_formatters"]
+            fields=["id", "user_id", "epoch", "content_type", "content_id", "content_formatters", "content_callback"]
             )
 
             if type(scheduled_messages) is list and len(scheduled_messages) > 0 and scheduled_messages[0] != 0:
@@ -161,7 +161,7 @@ class PollingConnection(Connection):
                         update_params={"is_sent": 1}
                         )
 
-                        parent.process_received({"user_id": tg_id}, [[str(scheduled_message[4]), "scheduled", eval(scheduled_message[5]), scheduled_message[0]],])
+                        parent.process_received({"user_id": tg_id}, [[str(scheduled_message[4]), "scheduled", eval(scheduled_message[5]), eval(scheduled_message[6]), scheduled_message[0]], ])
 
             time.sleep(int(config("telebot_scheduled_messages_update_interval"))) #TODO add outside control - instead of sleeping the whole time, sleep 1 second and check flags in "parent" (run now / pause)
 

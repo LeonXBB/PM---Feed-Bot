@@ -25,7 +25,7 @@ class Remainder(Screen):
 
         self.remainders.append(self)
 
-    def schedule(self, when, to_whom, formatters=None, group=None):
+    def schedule(self, when, to_whom, formatters=None, group=None, callback_data=None):
         
         rv = []
         if type(when) is not list: when = [when,]
@@ -35,7 +35,7 @@ class Remainder(Screen):
             rv.extend(Utils.api("execute_method",
             model="BotUser",
             params={"id": to_whom},
-            method={"name": "send_remainder_to", "params": [self.screen_id, timestamp, formatters if formatters is not None else [[],], group]}
+            method={"name": "send_remainder_to", "params": [self.screen_id, timestamp, formatters if formatters is not None else [[],], group, callback_data if callback_data is not None else [[],]]}
 ))
 
         return rv
@@ -56,7 +56,7 @@ class Remainder(Screen):
             update_params={"is_active": 0, "pause_epoch": int(time.time())})
         
     @classmethod
-    def reschedule(cls, group_name, update_time=True): # copilot: call Utils.api to update self.is_active to True (represented as int a), self.epoch to self.epoch + difference between int(time.time()) and self.pause_epoch, and set self.pause_epoch to an empty string ("")  
+    def reschedule(cls, group_name, add_time=True, new_time=None): # copilot: call Utils.api to update self.is_active to True (represented as int a), self.epoch to self.epoch + difference between int(time.time()) and self.pause_epoch, and set self.pause_epoch to an empty string ("")  
 
         scheduled_messages_ids = Utils.api("get",
         model="ScheduledMessage",
@@ -70,7 +70,7 @@ class Remainder(Screen):
             params={"id": scheduled_message_id[0]},
             fields=["epoch", "pause_epoch"])[0]
 
-            new_epoch = int(time.time()) + int(epoch) - int(pause_epoch) if update_time else epoch
+            new_epoch = int(time.time()) + int(epoch) - int(pause_epoch) if add_time and new_time is None else epoch if new_time is None else new_time
 
             Utils.api("update",
             model="ScheduledMessage",

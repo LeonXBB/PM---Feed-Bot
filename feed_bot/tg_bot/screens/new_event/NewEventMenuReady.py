@@ -93,35 +93,8 @@ class NewEventMenuReady(Screen):
 
     def button_5(self, params, user_id): # save
 
-        event_id, home_team_id, away_team_id = Utils.api("get",
+        return Utils.api("execute_method",
         model="Event",
         params={"admin_id": user_id, "status": 0},
-        fields=["id", "home_team_id", "away_team_id"]
+        method={"name": "save_template", "params": []}
         )[0]
-
-        home_team_name = Utils.api("get",
-        model="Team",
-        params={"id": home_team_id},
-        fields=["name",]
-        )[0][0]
-
-        away_team_name = Utils.api("get",
-        model="Team",
-        params={"id": away_team_id},
-        fields=["name",]
-        )[0][0]
-
-        Utils.api("update", 
-        model="Event",
-        filter_params={"id": event_id},
-        update_params={"status": 0}
-        )
-        
-        rv = []
-
-        rv.append(Utils.api("execute_method", model="BotUser", params={"id": user_id}, method={"name": "show_screen_to", "params": ["10", [[config("telebot_version")], ], ]})[0])
-        #TODO move static formatters into screen class?
-
-        rv.extend(Remainder._get_("EventScheduled").schedule([int(time.time()), int(time.time()) + 15], user_id, [[event_id, home_team_name, away_team_name],[]], f"event_{event_id}"))
-        
-        return rv

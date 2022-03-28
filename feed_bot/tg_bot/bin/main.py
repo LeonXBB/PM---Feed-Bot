@@ -35,11 +35,11 @@ class FeedBot(TeleBot):
         user_tg_id = data[0][0]
         user_language_id = data[0][1]
         
-        messages_count = len(list(obj.strings.keys())) - len(obj.keyboards)
+        messages_count = len(list(obj.strings.keys() if hasattr(obj, "strings") else obj.get_strings(data))) - len(obj.keyboards if hasattr(obj, "keyboards") else obj.get_keyboards(data))
 
         texts = []
 
-        layouts = obj.keyboards
+        layouts = obj.keyboards if hasattr(obj, "keyboards") else obj.get_keyboards(data)
         keyboards = []
 
         for layout in layouts:
@@ -52,7 +52,7 @@ class FeedBot(TeleBot):
                         
                         button_formatter = data[3][messages_count + len(keyboards)][i] if data[3] is not None and len(data[3]) > messages_count + len(keyboards) and data[3][messages_count + len(keyboards)] is not None and len(data[3][messages_count + len(keyboards)]) > i else list()
 
-                        callback_formatter = data[4][len(keyboards)][i] if data[4] is not None and len(data[4]) > len(keyboards) and data[4][len(keyboards)] is not None and len(data[4][len(keyboards)]) > i else list()
+                        callback_formatter = data[4][len(keyboards) - 1][i] if data[4] is not None and len(data[4]) >= len(keyboards) and data[4][len(keyboards)] is not None and len(data[4][len(keyboards)]) > i else list()
                         
                         keyboard[-1].append(InlineKeyboardButton(button["text"][user_language_id].format(button_formatter), callback_data=button["data"].format(callback_formatter)))
                         i += 1
@@ -63,7 +63,7 @@ class FeedBot(TeleBot):
 
         for i in range(messages_count):
            
-            text_dict_index = obj.strings[i]
+            text_dict_index = obj.strings[i] if hasattr(obj, "strings") else obj.get_strings(data)[i]
             text = text_dict_index[0][user_language_id]
             texts.append(text)
 
@@ -189,8 +189,8 @@ class FeedBot(TeleBot):
         for screen_data in reply:
             if int(screen_data[0]) not in ignore_ids: screens_ids.append(screen_data[0])
 
-        if screen_data[1] == "screen" and len(reply) > 1:
-            for i, screen_data in enumerate(reply):
+        for i, screen_data in enumerate(reply):
+            if screen_data[1] == "screen" and len(reply) > 1:
             
                 # delete previous screens for complicated menus
                 self.connection._delete_(user_id, "screen_messages_ids", f"str(k) not in {screens_ids}")  
@@ -219,7 +219,7 @@ class FeedBot(TeleBot):
 
                     Utils.api("update",
                     model="ScheduledMessage",
-                    filter_params={"id": screen_data[4]},
+                    filter_params={"id": screen_data[5]},
                     update_params={"messages_ids": ";".join(str(x) for x in new_messages_ids)}
                     )
 
@@ -227,6 +227,6 @@ class FeedBot(TeleBot):
                 
                 Utils.api("get_or_make",
                 model="ScheduledMessage",
-                params={"user_id": user_id, "epoch": screen_data[2], "content_type": "Remainder", "content_id": screen_data[0], "content_formatters": screen_data[3], "is_sent": 0, "is_active": 1, "group_name": screen_data[4]},
+                params={"user_id": user_id, "epoch": screen_data[2], "content_type": "Remainder", "content_id": screen_data[0], "content_formatters": screen_data[3], "is_sent": 0, "is_active": 1, "group_name": screen_data[4], "content_callback": screen_data[5]},
                 fields=[]
                 )

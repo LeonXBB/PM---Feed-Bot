@@ -1,31 +1,27 @@
-from telebot.types import InlineKeyboardMarkup, InlineKeyboardButton
-
+from ...bin.utils import Utils
 from ..Screen import Screen
 
 
 class ControlPanelPaused(Screen):
 
+    def get_strings(self):
+        return super().get_strings(via)
+
     def get_keyboards(self):
         
-        super().get_keyboards()
-
-        resume = InlineKeyboardButton(["Resume event", ], callback_data="0_0")
+        resume = {"text": self.strings[1][0], "data": "0_{}}"}
      
-        cancel = InlineKeyboardButton(["Cancel",], callback_data="3_0")
-        main_menu = InlineKeyboardButton(["Main Menu",], callback_data="4_0")
+        cancel = {"text": self.strings[1][0], "data": "1_{}"}
+        main_menu = {"text": self.strings[1][0], "data": "2_{}"}
         
         layout = [(resume, ), (cancel, main_menu)]
 
-        keyboard = InlineKeyboardMarkup(layout)
-
-        return [keyboard, ]
+        return [layout, ]
 
     def __init__(self, via) -> None:
+
         super().__init__(via, "31", "ControlPanelPaused")
-
-        # '''PAUSED\n\nTeam 1 - Team 2\n\n3 - 1\n(1-0)\n\nTime-outs:\n1 / 0''', ]}#self.strings[0]
-
-        #self.strings = self.strings[0]
+        delattr(self, "strings")
             
     def button_0(self, params, user_id): # resume
         pass

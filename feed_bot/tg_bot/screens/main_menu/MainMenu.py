@@ -7,7 +7,7 @@ from ..Screen import Screen
 
 class MainMenu(Screen):
 
-    def get_keyboards(self):
+    def get_keyboards(self, data=None):
         
         new_event = {"text": self.strings[1][0], "data": "0_0"}
         event_list = {"text": self.strings[1][1], "data": "1_0"}
@@ -21,6 +21,7 @@ class MainMenu(Screen):
 
     def __init__(self, via) -> None:
         super().__init__(via, "10", "MainMenu")
+        delattr(self, "keyboards")
            
     def button_0(self, params, user_id): # new event
         

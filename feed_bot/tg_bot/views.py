@@ -20,6 +20,7 @@ class BotAPI(TemplateView):
 
     def post(self, request): #TODO turn subfunctions from here into class methods (OR decorators!)
         
+        null = None
         data = eval(request.body.decode("utf8"))
 
         task = data["task"]

@@ -21,7 +21,7 @@ class Utils:
                 rv = requests.post(f"{config('server_address')}/api{subdomain}", json={"task": task, **kwargs}).json()
                 done = True
             except Exception as e: #TODO change to the specific type of an exception
-                print(f"Exception {e} occured while making request to api, trying again...")
+                #print(f"Exception {e} occured while making request to api, trying again...")
                 time.sleep(float(config("request_sleep_period"))) #TODO change to logger
                 done = True #TODO remove (see above)
         
