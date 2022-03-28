@@ -97,22 +97,7 @@ class Event(LogicModel):  #TODO move template to different class?
         pass
 
     def save_template(self): #TODO JSON
-        
-        '''home_team_name = Team._get_({"id": self.home_team_id})[0].name
-        away_team_name = Team._get_({"id": self.away_team_id})[0].name
-        
-        self.status = 1
-        self.save()
-
-        admin = BotUser._get_({"id": self.admin_id})[0]
-
-        rv = []
-
-        rv.append(admin.show_screen_to("10", [[config("telebot_version")], ], ))
-        #TODO move static formatters into screen class?
-
-        rv.extend(Remainder._get_("EventScheduled").schedule([int(time.time()), int(time.time()) + 15], self.admin_id, [[self.id, home_team_name, away_team_name],[]], f"event_{self.id}_start", [[self.id, self.id], ]))'''
-        
+               
         rv = self.start()
 
         return rv
@@ -126,6 +111,9 @@ class Event(LogicModel):  #TODO move template to different class?
         # TODO remember about callback data for buttons
         print(f"showing match template for event # {self.id}")
         return BotUser._get_({"id": self.admin_id})[0].show_list_of_events()
+
+    def show_paused_match_template(self):
+        pass
 
     # LOGIC
 
@@ -141,9 +129,6 @@ class Event(LogicModel):  #TODO move template to different class?
         hour, minute = self.time_scheduled.split(":")
 
         self.start_scheduled_epoch = str(int(datetime.datetime(int(year), int(month), int(day), int(hour), int(minute)).timestamp()))   
-
-        print(datetime.datetime(int(year), int(month), int(day), int(hour), int(minute)).timestamp())
-        print(datetime.datetime(int(year), int(month), int(day), int(hour), int(minute)))
 
         if rules_set.event_length_minutes == 0:
             self.end_scheduled_epoch= "0"
@@ -239,14 +224,16 @@ class Event(LogicModel):  #TODO move template to different class?
 
             for period_id in self.periods_ids:
                 if period_id:
-                    period = Period._get_({"id": period_id})[0]
-                    for point_id in period.points_ids:
-                        if point_id:
-                            point = Point._get_({"id": point_id})[0]
-                            if period_id not in List(point_score[point.team_id].keys()):
-                                point_score[point.team_id][period_id] = 0
-                            
-                            point_score[point.team_id][period_id] += point.score
+                    if res := len(Period._get_({"id": period_id})) > 0:
+                        period = res[0]
+                    
+                        for point_id in period.points_ids:
+                            if point_id:
+                                point = Point._get_({"id": point_id})[0]
+                                if period_id not in List(point_score[point.team_id].keys()):
+                                    point_score[point.team_id][period_id] = 0
+                                
+                                point_score[point.team_id][period_id] += point.score
 
             def check_end_by_score_period():
                 
@@ -273,7 +260,7 @@ class Event(LogicModel):  #TODO move template to different class?
                         score_sum[0] += point_score[self.home_team_id][period_id]
                         score_sum[1] += point_score[self.away_team_id][period_id]
 
-                return rules_set.win_event_by == 2 and (((score_sum >= rules_set.periods_to_win_event and rules_set.stop_event_after_enough_periods == 1) or max(score_sum) > rules_set.periods_in_event) and score_sum - score_sum > rules_set.min_difference_to_win_event)
+                return rules_set.win_event_by == 2 and (((max(score_sum) >= rules_set.periods_to_win_event and rules_set.stop_event_after_enough_periods == 1) or max(score_sum) > rules_set.periods_in_event) and max(score_sum) - min(score_sum) > rules_set.min_difference_to_win_event)
 
             return check_end_by_score_period() or check_end_by_score_sum()
 
@@ -287,6 +274,13 @@ class Event(LogicModel):  #TODO move template to different class?
         if check_end():
             self.end()
 
+        if check_side_change():
+            
+            obj = SideChange()
+
+            obj.happen()
+            obj.save()
+
         if check_coin_toss():
             
             obj = CoinToss()
@@ -294,14 +288,10 @@ class Event(LogicModel):  #TODO move template to different class?
             obj.happen(self.id, int(self.start_scheduled_epoch) - int(rules_set.coin_toss_start_before_minutes.split(";")[len(CoinToss.objects.all())]) * 60, period_count+1, self.home_team_id)
             obj.save()
 
+            self.coin_toss_ids += f"{obj.id};"
+            self.save()
+
             rv.extend(obj.show_template())
-
-        if check_side_change():
-            
-            obj = SideChange()
-
-            obj.happen()
-            obj.save()
 
         return rv
 
@@ -330,20 +320,20 @@ class Event(LogicModel):  #TODO move template to different class?
 
 class Period(LogicModel):
 
-    # statuses 0 - awaiting_start, 1 - ongoing, 2 - paused, 3 - finished
+    # statuses 0 - awaiting_start, 1 - ongoing, 2 - finished
 
     event_id = models.IntegerField(default=-1)
 
-    epoch_scheduled_start = models.CharField(max_length=5096, default="")
-    epoch_scheduled_end = models.CharField(max_length=5096, default="")
-    epoch_actual_start = models.CharField(max_length=5096, default="")
-    epoch_actual_end = models.CharField(max_length=5096, default="")
+    start_scheduled_epoch = models.CharField(max_length=5096, default="")
+    end_scheduled_epoch = models.CharField(max_length=5096, default="")
+    start_actual_epoch = models.CharField(max_length=5096, default="")
+    end_actual_epoch = models.CharField(max_length=5096, default="")
 
     left_team_id = models.IntegerField(default=-1)
     right_team_id = models.IntegerField(default=-1)
+    ball_possesion = models.IntegerField(default=-1)
 
     is_paused = models.IntegerField(default=0)
-    ball_possesion = models.IntegerField(default=-1)
 
     time_outs_ids = models.CharField(max_length=5096, default=";")
     points_ids = models.CharField(max_length=5096, default=";")
@@ -355,41 +345,41 @@ class Period(LogicModel):
         
         event = Event._get_({"id": self.event_id})[0]
         rules_set = RulesSet._get_({"id": event.rules_set_id})[0]
-        home_team_name = Team._get_({"id": event.home_team_id})[0].name
-        away_team_name = Team._get_({"id": event.away_team_id})[0].name
+        admin = BotUser._get_({"id": event.admin_id})[0]
 
         self.status = 1
         
-        self.epoch_actual_start = str(time.time())
-        if rules_set.periods_lenght_minutes == 0:
-            self.epoch_scheduled_end = "0"
+        events_count = len(Event._get_({"event_id": self.event_id}))
+        
+        if events_count == 1:
+            # 1st event
+            self.start_scheduled_epoch = event.start_scheduled_epoch 
         else:
-            end_time = str(time.time() + rules_set.periods_lenght_minutes.split(";")[len(event.periods_ids.split(";")) - 1] * 60)
-            self.epoch_scheduled_end = end_time
-            
-            current_period_number = len(period_id for period_id in event.periods_ids.split(";") if period_id)
-
-            Remainder._get_("PeriodEnd").schedule(end_time, event.admin_id, [[current_period_number, self.event_id, home_team_name, away_team_name],], f"event_{self.event_id}_end", [[self.id,],])
-            for event_end_remainder in rules_set.event_end_remainder_minutes_before.split(";"):
-                if event_end_remainder:
-                    Remainder._get_("PeriodAboutToEnd").schedule(end_time - int(event_end_remainder) * 60, event.admin_id, [[current_period_number, self.event_id, home_team_name, away_team_name],], f"event_{self.event_id}_end", [[self.id,],])
+            # 2nd event or more
+            self.start_scheduled_epoch = Period._get_({"event_id": self.event_id, "status": 2})[-1].epoch_scheduled_end + rules_set.interval_between_periods_munutes.split(";")[events_count - 1] * 60 #TODO check if we need to substract 2
+ 
+        
+        if rules_set.periods_lenght_minutes == 0:
+            self.end_scheduled_epoch = "0"
+        else:
+            self.end_scheduled_epoch = str(int(self.start_scheduled_epoch) + int(rules_set.periods_lenght_minutes.split(";")[events_count - 1]) * 60)
 
         self.save()
 
-        
-        self.run()
+        rv = [admin.show_screen_to("10", [[config("telebot_version")], ], ), *self.run()]
 
+        return rv
+                
     def end(self): #TODO JSON
         
         self.status = 3
-        self.epoch_actual_end = str(time.time())
+        self.end_actual_epoch = str(time.time())
        
         Remainder.unschedule(f"event_{self.event.id}_end")
 
         self.save()
 
         event = Event._get_({"id": self.event_id})[0]
-       
         event.run()
 
     def pause(self):
@@ -608,18 +598,24 @@ class CoinToss(LogicModel):
 
     def swipe(self, attr):
 
-        event = Event._get_(self.event_id)[0]
+        event = Event._get_({"id": self.event_id})[0]
 
-        setattr(self, attr, event.left_team_id if getattr(self, attr) == event.right_team_id else event.left_team_id)
+        setattr(self, attr, event.away_team_id if getattr(self, attr) == event.home_team_id else event.home_team_id)
+
         self.save()
         return self.show_template()
 
     def save_results(self):
         
         self.epoch_actual = str(time.time())
-
         self.save()
 
+        new_period = Period()
+        new_period.event_id = self.event_id
+        new_period.save()
+
+        return new_period.start() 
+        
     def cancel_happen(self):
         pass
 
@@ -638,7 +634,7 @@ class CoinToss(LogicModel):
         server_name = Team._get_({"id": self.ball_possesion_team_id})[0].name
 
         rv = []
-        rv.append(admin.show_screen_to("32", [[self.event_id, self.before_period, left_team_name, server_name], ], [[self.id, self.id], ]))
+        rv.append(admin.show_screen_to("32", [[self.event_id, self.before_period, left_team_name, server_name], ], [[self.id, self.id, self.id, self.id], ]))
         rv.append(("ignore", 32))
         return rv
 

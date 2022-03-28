@@ -26,8 +26,99 @@ class EventPanelActive(Screen):
         
     def button_1(self, params, user_id):
         
-        return Utils.api("execute_method",
+        event_id, event_status, event_periods_ids, rules_set_id = Utils.api("get",
         model="Event",
         params={"id": int(params[0])},
-        method={"name": "show_match_template", "params": []}
+        fields=["id", "status", "periods_ids", "rules_set_id"]
         )[0]
+
+        if event_status == 0: # being created
+            
+            return Utils.api("execute_method",
+            model="Event",
+            params={"id": event_id},
+            method={"name": "show_template", "params": []}
+            )[0]
+
+        elif event_status == 1: # awaiting start
+            
+            coin_tosses_before_periods = Utils.api("get",
+            model="RulesSet",
+            params={"id": rules_set_id},
+            fields=["coin_tosses_before_periods"]
+            )[0][0]
+
+            period_count = 0
+            for period_id in event_periods_ids.split(";"):
+                if period_id:
+                    period_count += 1
+
+            if coin_tosses_before_periods.split(";")[period_count] == "1":
+                
+                return Utils.api("execute_method",
+                model="Event",
+                params={"id": int(params[0])},
+                method={"name": "run", "params": ["coinToss_"]})[0]
+            
+            else: #TODO check?
+                
+                period_id = Utils.api("get_or_make",
+                model="Period",
+                params={"event_id": event_id, "status": 0},
+                fields=["id"],)[0][0]
+
+                return Utils.api("execute_method",
+                model="Period",
+                params={"id": period_id},
+                method={"name": "start", "params": []}
+                )[0]
+
+        elif event_status == 3: #between periods #TODO check
+            
+            period_id = Utils.api("get_or_make",
+            model="Period",
+            params={"event_id": event_id, "status": 0},
+            fields=["id"],)[0][0]
+
+            return Utils.api("execute_method",
+            model="Period",
+            params={"id": period_id},
+            method={"name": "start", "params": []}
+            )[0]
+
+        elif event_status == 2: #in progress #TODO check
+            
+            is_paused = 0
+
+            for period_id in event_periods_ids.split(";"):
+                if period_id:
+                    res = Utils.api("get",
+                    model="Period",
+                    params={"id": int(period_id)},
+                    fields=["is_paused",])
+                    if len(res) > 0:
+                        is_paused = res[0][0]
+
+            if is_paused:
+
+                return Utils.api("execute_method",
+                model="Event",
+                params={"id": event_id},
+                method={"name": "show_paused_match_template", "params": []}
+                )[0]
+            
+            else:
+                
+                return Utils.api("execute_method",
+                model="Event",
+                params={"id": event_id},
+                method={"name": "show_match_template", "params": []}
+                )[0]
+
+        elif event_status == 4: #finished #TODO check
+            
+            return Utils.api("execute_method",
+            model="Event",
+            params={"id": event_id},
+            method={"name": "show_paused_match_template", "params": []}
+            )[0]

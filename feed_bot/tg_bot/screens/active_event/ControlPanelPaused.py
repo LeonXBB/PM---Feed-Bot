@@ -4,8 +4,8 @@ from ..Screen import Screen
 
 class ControlPanelPaused(Screen):
 
-    def get_strings(self):
-        return super().get_strings(via)
+    #def get_strings(self):
+    #    return super().get_strings(via)
 
     def get_keyboards(self):
         
@@ -21,7 +21,7 @@ class ControlPanelPaused(Screen):
     def __init__(self, via) -> None:
 
         super().__init__(via, "31", "ControlPanelPaused")
-        delattr(self, "strings")
+        #delattr(self, "strings")
             
     def button_0(self, params, user_id): # resume
         pass

@@ -116,14 +116,13 @@ class PollingConnection(Connection):
             for i, v in enumerate(val):
                 if eval(filter):
                     messages_ids.append(data[k][i])
-                    #data[k].pop(i)
 
         for message_id in messages_ids:
             try:
-                self.parent.delete_message(tg_id, int(message_id))
                 for k, val in data.copy().items():
                     if message_id in val:
                         data[k].remove(message_id)
+                self.parent.delete_message(tg_id, int(message_id))
             except Exception as e:
                 print(e)
 

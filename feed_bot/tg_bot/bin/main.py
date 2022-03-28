@@ -141,8 +141,8 @@ class FeedBot(TeleBot):
             method={"name": "receive_button_press_from", "params": [button_id, params, "remainder", remainder_id, scheduled_message_id]}
             )        
                   
-            if remainder_id.startswith("0"): remainder_id = f"1{remainder_id}"
-            self.connection._delete_(user_id, "remainders_ids", f"k == str({remainder_id}) and v == int({message_id})")
+            if len(str(remainder_id)) == 2: remainder_id = f"1{remainder_id}"
+            self.connection._delete_(user_id, "remainders_ids", f"str(k) == str({remainder_id}) and int(v) == int({message_id})")
 
         elif message["mess_type"] == "button" and message["mess_content"][0].startswith("d_"):
             
