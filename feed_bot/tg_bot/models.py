@@ -1,4 +1,3 @@
-from typing import List
 from decouple import config
 
 from django.db import models
@@ -108,12 +107,385 @@ class Event(LogicModel):  #TODO move template to different class?
     # MATCH TEMPLATE
 
     def show_match_template(self):
-        # TODO remember about callback data for buttons
-        print(f"showing match template for event # {self.id}")
-        return BotUser._get_({"id": self.admin_id})[0].show_list_of_events()
+       
+        # (ball) team 1 (ball or '-') team 2 (ball)
+        #
+        # point_score 1 - point score 2 (total 1 - total 2)
+        # (period score 1 - period score 2)
+        #
+        # time_outs: 1 - 2 (total 1 - total 2)
+        # *action name 1* 1 - 2 (total 1 - total 2)
+        # (*continue for all actions*)
+
+        # ball control / pause / ball control
+        # point 1 - point 2
+        # (opt) time out 1 - time out 2
+        # (opt) action 1 - action 2
+        # (* continue for all actions *)
+
+        def check_for_timeouts():
+            return max(list( int(time_out_per_team) for time_out_per_team in (rules_set.time_outs_per_team_per_period.split(";")[period_count - 1]).split(',') )) > 0
+
+        admin = BotUser._get_({"id": self.admin_id})[0]
+        rules_set = RulesSet._get_({"id": self.rules_set_id})[0]
+
+        period_count = len(list((period_id for period_id in self.periods_ids.split(";") if period_id)))
+        current_period = Period._get_({"event_id": self.id, "status": 1})[0]       
+
+        rv = [] 
+        formatters = []
+        callbacks = []
+
+        points_by_type_by_period = []
+        sum_points_by_period = []
+        periods_score = [0, 0]
+        
+        time_outs_all = []
+        actions_all = []
+        
+        for action_type in rules_set.actions_list.split(";"):
+            if action_type:
+                actions_all.append(list())
+
+        for point_type in rules_set.scores_names.split(";"):
+            if point_type:
+                points_by_type_by_period.append(list())
+
+        for period_id in self.periods_ids.split(";"):
+            if period_id:
+
+                time_outs_all.append(list())
+                for action_type in actions_all:
+                    action_type.append(list())
+
+                period = Period._get_({"id": int(period_id)})[0]
+
+                sum_points_by_period.append([0, 0])
+
+                for i, point_type in enumerate(rules_set.scores_names.split(";")):
+                    if point_type:
+                        points_by_type_by_period[i].append([0, 0])
+
+                    for point_id in period.points_ids.split(";"):
+                        if point_id:
+                            point = Point._get_({"id": int(point_id)})[0]
+                            if point.type == i:
+                                if point.team_id == period.left_team_id:
+                                    points_by_type_by_period[i][-1][0] += point.value
+                                    sum_points_by_period[-1][0] += point.value
+                                else:
+                                    points_by_type_by_period[i][-1][1] += point.value
+                                    sum_points_by_period[-1][1] += point.value
+
+                if sum_points_by_period[-1][0] > sum_points_by_period[-1][1]:
+                    periods_score[0] += 1
+                elif sum_points_by_period[-1][0] < sum_points_by_period[-1][1]:
+                    periods_score[1] += 1
+
+                for time_out_id in current_period.time_outs_ids.split(";"):
+                    if time_out_id:
+                        time_out = TimeOut._get_({"id": str(time_out_id)})[0]
+                        if time_out.team_id == current_period.left_team_id:
+                            time_outs_all[-1][0] += 1
+                        else:
+                            time_outs_all[-1][1] += 1
+
+                for action_id in current_period.actions_ids.split(";"):
+                    if action_id:
+                        action = Action._get_({"id": int(action_id)})[0]
+                        if action.team_id == current_period.left_team_id:
+                            actions_all[action.type_id][-1][0] += 1
+                        else:
+                            actions_all[action.type_id][-1][0] += 1
+
+        ball = getattr(TextString._get_({"screen_id": "active", "position_index": 0})[0], f"language_{admin.language_id + 1}")
+        left_ball = ball if current_period.ball_possesion_team_id == current_period.left_team_id else ""
+        central_ball = ball if current_period.ball_possesion_team_id != current_period.left_team_id and current_period.ball_possesion_team_id != current_period.right_team_id else " --- "
+        right_ball = ball if current_period.ball_possesion_team_id == current_period.right_team_id else ""
+
+        left_team_name = Team._get_({"id": current_period.left_team_id})[0].name
+        right_team_name = Team._get_({"id": current_period.right_team_id})[0].name
+
+        header = f"{left_ball}{left_team_name}{central_ball}{right_team_name}{right_ball}"
+                      
+        scores = ""        
+        
+        scores += f"{sum_points_by_period[-1][0]} - {sum_points_by_period[-1][1]}"
+        scores += f"\n({periods_score[0]} - {periods_score[1]})\n"
+
+        for i, point_type in enumerate(rules_set.scores_names.split(";")):
+            if point_type:
+                
+                sum_0 = sum_1 = 0
+                for period_ in points_by_type_by_period[i]:
+                    sum_0 += period_[0]
+                    sum_1 += period_[1]
+
+                try:
+                    scores += f"\n   {point_type}: {points_by_type_by_period[i][-1][0]} - {points_by_type_by_period[i][-1][1]} ({sum_0} - {sum_1})"
+                except: #for when we didnt have any points of this type (e.g. when we have only one period) #TODO: find a better way to do this
+                    pass 
+
+        time_out_string = "\n"
+        if check_for_timeouts():
+            time_out_word = getattr(TextString._get_({"screen_id": "active", "position_index": 1})[0], f"language_{admin.language_id + 1}")
+            
+            try: # if we have time outs #TODO find a better way to do this (check lenght)
+                time_outs_1 = time_outs_all[-1][0]
+            except: # if we dont have time outs
+                time_outs_1 = 0
+
+            try:
+                time_outs_2 = time_outs_all[-1][1]
+            except:
+                time_outs_2 = 0
+
+            time_outs_1_total = 0
+            time_outs_2_total = 0
+
+            for period in time_outs_all:
+                try:
+                    time_outs_1_total += period[0]
+                except:
+                    pass
+
+                try:
+                    time_outs_2_total += period[1]
+                except:
+                    pass
+
+            time_out_string = f"\n\n{time_out_word}: {time_outs_1} - {time_outs_2} ({time_outs_1_total} - {time_outs_2_total})"
+
+        bottom_string = f"{time_out_string}"
+
+        for i, action in enumerate(rules_set.actions_list.split(";")):
+            if action:
+                try: # if we have actions #TODO find a better way to do this (check lenght)
+                    action_1 = actions_all[i][-1][0]
+                except: # if we dont have actions
+                    action_1 = 0
+
+                try:
+                    action_2 = actions_all[i][-1][1]
+                except:
+                    action_2 = 0
+
+                action_1_total = 0
+                action_2_total = 0
+
+                try: # if we have actions #TODO find a better way to do this (check lenght)
+                    for period in actions_all[i]:
+
+                        try: 
+                            action_1_total += period[0]
+                        except:
+                            pass
+                        
+                        try:
+                            action_2_total += period[1]
+                        except:
+                            pass
+                except: # if we dont have actions
+                    pass
+
+                action_string = f"\n   {action}: {action_1} - {action_2} ({action_1_total} - {action_2_total})"
+
+                bottom_string += f"{action_string}"
+
+        formatters.append([header, scores, bottom_string])
+
+        callbacks.append(list())
+        for i in range(20): # TODO calculate excat number of buttons!!!
+            callbacks[-1].append(current_period.id)
+
+        rv.append(admin.show_screen_to('30', formatters, callbacks))
+
+        rv.append(["ignore", 30])
+
+        return rv
 
     def show_paused_match_template(self):
-        pass
+        
+        def check_for_timeouts():
+            return max(list( int(time_out_per_team) for time_out_per_team in (rules_set.time_outs_per_team_per_period.split(";")[period_count - 1]).split(',') )) > 0
+
+        admin = BotUser._get_({"id": self.admin_id})[0]
+        rules_set = RulesSet._get_({"id": self.rules_set_id})[0]
+
+        period_count = len(list((period_id for period_id in self.periods_ids.split(";") if period_id)))
+        current_period = Period._get_({"event_id": self.id, "status": 1})[0]       
+
+        rv = [] 
+        formatters = []
+        callbacks = []
+
+        points_by_type_by_period = []
+        sum_points_by_period = []
+        periods_score = [0, 0]
+        
+        time_outs_all = []
+        actions_all = []
+        
+        for action_type in rules_set.actions_list.split(";"):
+            if action_type:
+                actions_all.append(list())
+
+        for point_type in rules_set.scores_names.split(";"):
+            if point_type:
+                points_by_type_by_period.append(list())
+
+        for period_id in self.periods_ids.split(";"):
+            if period_id:
+
+                time_outs_all.append(list())
+                for action_type in actions_all:
+                    action_type.append(list())
+
+                period = Period._get_({"id": int(period_id)})[0]
+
+                sum_points_by_period.append([0, 0])
+
+                for i, point_type in enumerate(rules_set.scores_names.split(";")):
+                    if point_type:
+                        points_by_type_by_period[i].append([0, 0])
+
+                    for point_id in period.points_ids.split(";"):
+                        if point_id:
+                            point = Point._get_({"id": int(point_id)})[0]
+                            if point.type == i:
+                                if point.team_id == period.left_team_id:
+                                    points_by_type_by_period[i][-1][0] += point.value
+                                    sum_points_by_period[-1][0] += point.value
+                                else:
+                                    points_by_type_by_period[i][-1][1] += point.value
+                                    sum_points_by_period[-1][1] += point.value
+
+                if sum_points_by_period[-1][0] > sum_points_by_period[-1][1]:
+                    periods_score[0] += 1
+                elif sum_points_by_period[-1][0] < sum_points_by_period[-1][1]:
+                    periods_score[1] += 1
+
+                for time_out_id in current_period.time_outs_ids.split(";"):
+                    if time_out_id:
+                        time_out = TimeOut._get_({"id": int(time_out_id)})[0]
+                        if time_out.team_id == current_period.left_team_id:
+                            time_outs_all[-1][0] += 1
+                        else:
+                            time_outs_all[-1][1] += 1
+
+                for action_id in current_period.actions_ids.split(";"):
+                    if action_id:
+                        action = Action._get_({"id": int(action_id)})[0]
+                        if action.team_id == current_period.left_team_id:
+                            actions_all[action.type_id][-1][0] += 1
+                        else:
+                            actions_all[action.type_id][-1][0] += 1
+
+        ball = getattr(TextString._get_({"screen_id": "active", "position_index": 0})[0], f"language_{admin.language_id + 1}")
+        left_ball = ball if current_period.ball_possesion_team_id == current_period.left_team_id else ""
+        central_ball = ball if current_period.ball_possesion_team_id != current_period.left_team_id and current_period.ball_possesion_team_id != current_period.right_team_id else " --- "
+        right_ball = ball if current_period.ball_possesion_team_id == current_period.right_team_id else ""
+
+        left_team_name = Team._get_({"id": current_period.left_team_id})[0].name
+        right_team_name = Team._get_({"id": current_period.right_team_id})[0].name
+
+        header = f"{left_ball}{left_team_name}{central_ball}{right_team_name}{right_ball}"
+                      
+        scores = ""        
+        
+        scores += f"{sum_points_by_period[-1][0]} - {sum_points_by_period[-1][1]}"
+        scores += f"\n({periods_score[0]} - {periods_score[1]})\n"
+
+        for i, point_type in enumerate(rules_set.scores_names.split(";")):
+            if point_type:
+                
+                sum_0 = sum_1 = 0
+                for period_ in points_by_type_by_period[i]:
+                    sum_0 += period_[0]
+                    sum_1 += period_[1]
+
+                try:
+                    scores += f"\n   {point_type}: {points_by_type_by_period[i][-1][0]} - {points_by_type_by_period[i][-1][1]} ({sum_0} - {sum_1})"
+                except: #for when we didnt have any points of this type (e.g. when we have only one period) #TODO: find a better way to do this
+                    pass 
+
+        time_out_string = "\n"
+        if check_for_timeouts():
+            time_out_word = getattr(TextString._get_({"screen_id": "active", "position_index": 1})[0], f"language_{admin.language_id + 1}")
+            
+            try: # if we have time outs #TODO find a better way to do this (check lenght)
+                time_outs_1 = time_outs_all[-1][0]
+            except: # if we dont have time outs
+                time_outs_1 = 0
+
+            try:
+                time_outs_2 = time_outs_all[-1][1]
+            except:
+                time_outs_2 = 0
+
+            time_outs_1_total = 0
+            time_outs_2_total = 0
+
+            for period in time_outs_all:
+                try:
+                    time_outs_1_total += period[0]
+                except:
+                    pass
+
+                try:
+                    time_outs_2_total += period[1]
+                except:
+                    pass
+
+            time_out_string = f"\n\n{time_out_word}: {time_outs_1} - {time_outs_2} ({time_outs_1_total} - {time_outs_2_total})"
+
+        bottom_string = f"{time_out_string}"
+
+        for i, action in enumerate(rules_set.actions_list.split(";")):
+            if action:
+                try: # if we have actions #TODO find a better way to do this (check lenght)
+                    action_1 = actions_all[i][-1][0]
+                except: # if we dont have actions
+                    action_1 = 0
+
+                try:
+                    action_2 = actions_all[i][-1][1]
+                except:
+                    action_2 = 0
+
+                action_1_total = 0
+                action_2_total = 0
+
+                try: # if we have actions #TODO find a better way to do this (check lenght)
+                    for period in actions_all[i]:
+
+                        try: 
+                            action_1_total += period[0]
+                        except:
+                            pass
+                        
+                        try:
+                            action_2_total += period[1]
+                        except:
+                            pass
+                except: # if we dont have actions
+                    pass
+
+                action_string = f"\n   {action}: {action_1} - {action_2} ({action_1_total} - {action_2_total})"
+
+                bottom_string += f"{action_string}"
+
+        formatters.append([header, scores, bottom_string])
+
+        callbacks.append(list())
+        for i in range(3):
+            callbacks[-1].append(current_period.id)
+
+        rv.append(admin.show_screen_to('31', formatters, callbacks))
+
+        rv.append(["ignore", 31])
+
+        return rv #TODO either change or unite with the one above
 
     # LOGIC
 
@@ -231,7 +603,7 @@ class Event(LogicModel):  #TODO move template to different class?
                         for point_id in period.points_ids:
                             if point_id:
                                 point = Point._get_({"id": point_id})[0]
-                                if period_id not in List(point_score[point.team_id].keys()):
+                                if period_id not in list(point_score[point.team_id].keys()):
                                     point_score[point.team_id][period_id] = 0
                                 
                                 point_score[point.team_id][period_id] += point.score
@@ -348,7 +720,7 @@ class Period(LogicModel):
         rules_set = RulesSet._get_({"id": event.rules_set_id})[0]
         admin = BotUser._get_({"id": event.admin_id})[0]
        
-        periods_count = len(Event._get_({"event_id": self.event_id}))
+        periods_count = len(Period._get_({"event_id": self.event_id}))
         
         if periods_count == 1:
             # 1st event
@@ -361,14 +733,15 @@ class Period(LogicModel):
 
         else:
             # 2nd event or more
-            self.start_scheduled_epoch = Period._get_({"event_id": self.event_id, "status": 2})[-1].epoch_scheduled_end + rules_set.interval_between_periods_munutes.split(";")[periods_count - 1] * 60 #TODO check if we need to substract 2
+            self.start_scheduled_epoch = Period._get_({"event_id": self.event_id, "status": 2})[-1].end_actual_epoch + rules_set.interval_between_periods_munutes.split(";")[periods_count - 1] * 60 #TODO check if we need to substract 2
  
             if self.left_team_id == -1 or self.right_team_id == -1 or self.ball_possesion_team_id == -1:
                 self.left_team_id = Period._get_({"event_id": self.event_id, "status": 2})[-1].left_team_id
                 self.right_team_id = Period._get_({"event_id": self.event_id, "status": 2})[-1].right_team_id
                 self.ball_possesion_team_id = Period._get_({"event_id": self.event_id, "status": 2})[-1].ball_possesion_team_id
         
-        if rules_set.periods_lenght_minutes.split(";")[periods_count] == 0:
+
+        if rules_set.periods_lenght_minutes.split(";")[periods_count - 1] == "0":
             self.end_scheduled_epoch = "0"
         else:
             self.end_scheduled_epoch = str(int(self.start_scheduled_epoch) + int(rules_set.periods_lenght_minutes.split(";")[periods_count - 1]) * 60)
@@ -386,20 +759,22 @@ class Period(LogicModel):
         
         self.status = 3
         self.end_actual_epoch = str(time.time())
-       
-        Remainder.unschedule(f"event_{self.event.id}_end")
-
         self.save()
 
+        Remainder.unschedule(f"event_{self.event.id}_end")
+
         event = Event._get_({"id": self.event_id})[0]
-        event.run()
+        event.status = 3
+        event.save()
+        return event.run()
 
     def pause(self):
         
-        rules_set = RulesSet._get_({"id": self.event.rules_set_id})[0]
-        period_count = len(Event._get_({"event_id": self.event_id}))
+        event = Event._get_({"id": self.event_id})[0]
+        rules_set = RulesSet._get_({"id": event.rules_set_id})[0]
+        period_count = len(Period._get_({"event_id": self.event_id}))
 
-        if rules_set.timers_stop_at_pauses == 1:
+        if rules_set.timers_stop_at_pauses == 1: #TODO add for event timers as well
             Remainder.unschedule(f"period_{period_count}_event_{self.event_id}_end")
 
         self.is_paused = 1
@@ -407,8 +782,9 @@ class Period(LogicModel):
 
     def resume(self):
         
-        rules_set = RulesSet._get_({"id": self.event.rules_set_id})[0]
-        period_count = len(Event._get_({"event_id": self.event_id}))
+        event = Event._get_({"id": self.event_id})[0]
+        rules_set = RulesSet._get_({"id": event.rules_set_id})[0]
+        period_count = len(Period._get_({"event_id": self.event_id}))
 
         if rules_set.timers_stop_at_pauses == 1:
             Remainder.reschedule(f"period_{period_count}_event_{self.event_id}_end")
@@ -416,26 +792,40 @@ class Period(LogicModel):
         self.is_paused = 0
         self.save()
 
+    def launch(self):
+
+        event = Event._get_({"id": self.event_id})[0]
+
+        self.status = 1
+        event.status = 2
+
+        self.start_actual_epoch = str(time.time())
+        if event.start_actual_epoch == "":
+            event.start_actual_epoch = self.start_actual_epoch
+
+        self.save()
+        event.save()
+
     def run(self, command="_") -> None: #TODO JSON
         
         rv = []
 
         event = Event._get_({"id": self.event_id})[0]
-        rules_set = RulesSet._get_({"id": self.rules_set_id})[0]
+        rules_set = RulesSet._get_({"id": event.rules_set_id})[0]
 
         left_team_name = Team._get_({"id": self.left_team_id})[0].name
         right_team_name = Team._get_({"id": self.right_team_id})[0].name
 
         period_count = 0
-        for period_id in self.periods_ids.split(";"):
+        for period_id in event.periods_ids.split(";"):
             if period_id:
                 period_count += 1
 
         score = [0,0]
         for point_id in self.points_ids.split(";"):
             if point_id:
-                Point = Point._get_({"id": point_id})[0]
-                score[Point.team_id != self.left_team_id] += 1
+                point = Point._get_({"id": point_id})[0]
+                score[point.team_id != self.left_team_id] += 1
 
         def check_remainders():
             
@@ -443,52 +833,52 @@ class Period(LogicModel):
                 return len(ScheduledMessage._get_({"content_id": remainder_id, "group_name": group_name})) > 0
             
             if self.status == 0 and not check_sent_already(114, f"period_{period_count}_event_{self.event_id}_start"):   
-                rv.extend(Remainder._get_("PeriodScheduled").schedule(int(time.time()), self.admin_id, [[period_count, self.event_id, left_team_name, right_team_name] ,], f"period_{period_count}_event_{self.event_id}_start", [[self.event_id, self.event_id], ]))
+                rv.extend(Remainder._get_("PeriodScheduled").schedule(int(time.time()), event.admin_id, [[period_count, self.event_id, left_team_name, right_team_name] ,], f"period_{period_count}_event_{self.event_id}_start", [[self.id, self.id], ]))
 
             # check period start
             
-            if self.status == 1 and not check_sent_already(110, f"period_{period_count}_event_{self.event_id}_start"):
+            if self.status == 0 and not check_sent_already(110, f"period_{period_count}_event_{self.event_id}_start"):
                     
                 when = int(self.start_scheduled_epoch)
 
-                rv.extend(Remainder._get_("PeriodStart").schedule(when, self.admin_id, [[period_count, self.event_id, left_team_name, right_team_name] ,], f"period_{period_count}_event_{self.event_id}_start", [[self.event_id, self.event_id], ]))
+                rv.extend(Remainder._get_("PeriodStart").schedule(when, event.admin_id, [[period_count, self.event_id, left_team_name, right_team_name] ,], f"period_{period_count}_event_{self.event_id}_start", [[self.id, self.id], ]))
     
                 for offset in rules_set.period_start_remainder_minutes_before.split(";")[period_count-1]:
                     if offset:
-                        rv.extend(Remainder._get_("PeriodAboutToStart").schedule(when - int(offset) * 60, self.admin_id, [[period_count, self.event_id, left_team_name, right_team_name, offset] ,], f"period_{period_count}_event_{self.event_id}_start", [[self.event_id, self.event_id], ]))
+                        rv.extend(Remainder._get_("PeriodAboutToStart").schedule(when - int(offset) * 60, event.admin_id, [[period_count, self.event_id, left_team_name, right_team_name, offset] ,], f"period_{period_count}_event_{self.id}_start", [[self.id, self.id], ]))
 
             # check period end
 
-            if rules_set.periods_lenght_minutes.split(";")[period_count-1] != 0 and self.status == 1 and not check_sent_already(111, f"period_{period_count}_event_{self.event_id}_end"):
+            if rules_set.periods_lenght_minutes.split(";")[period_count-1] != "0" and self.status == 1 and not check_sent_already(111, f"period_{period_count}_event_{self.event_id}_end"):
                     
                 when = int(self.end_scheduled_epoch)
                 
-                rv.extend(Remainder._get_("PeriodEnd").schedule(when, self.admin_id, [[period_count, self.event_id, left_team_name, right_team_name] ,], f"period_{period_count}_event_{self.event_id}_end", [[self.event_id, self.event_id], ]))
+                rv.extend(Remainder._get_("PeriodEnd").schedule(when, event.admin_id, [[period_count, self.event_id, left_team_name, right_team_name] ,], f"period_{period_count}_event_{self.event_id}_end", [[self.id, self.id], ]))
     
                 for offset in rules_set.period_end_remainder_minutes_before.split(";")[period_count-1]:
                     if offset:
-                        rv.extend(Remainder._get_("PeriodAboutToEnd").schedule(when - int(offset) * 60, self.admin_id, [[period_count, self.event_id, left_team_name, right_team_name, offset] ,], f"period_{period_count}_event_{self.event_id}_end", [[self.event_id, self.event_id], ]))
+                        rv.extend(Remainder._get_("PeriodAboutToEnd").schedule(when - int(offset) * 60, event.admin_id, [[period_count, self.event_id, left_team_name, right_team_name, offset] ,], f"period_{period_count}_event_{self.event_id}_end", [[self.id, self.id], ]))
 
             # check side change reminders
             x,y = rules_set.side_changes_during_periods_scores.split(";")[len(SideChange._get_({"event_id": self.event_id}))].split(",")
             if self.status == 1 and rules_set.side_changes_during_periods.split(';')[period_count - 1] == 1 and ((score[0] == x or x == "0") and (score[1] == y or y == "0")) and not check_sent_already(150, f"event_{self.event_id}_side_change_during_period_{period_count}_event_{self.event_id}"):
                 
-                rv.extend((Remainder._get_("SideChangeHappens").schedule(int(time.time()), self.admin_id, [[] ,], f"event_{self.event_id}_side_change_after_perid_{period_count}", [[], ])))
+                rv.extend((Remainder._get_("SideChangeHappens").schedule(int(time.time()), event.admin_id, [[] ,], f"event_{self.event_id}_side_change_after_perid_{period_count}", [[], ])))
 
             # check time_out
             if data[0] == "timeOut":
                 
-                rv.extend((Remainder._get_("TimeOutStart").schedule(int(time.time()), self.admin_id, [[left_team_name if data[1] is "0" else right_team_name], ], f"period_{period_count}_event_{self.event_id}_technical_time_out_score_{':'.join(score)}", [[], ])))
+                rv.extend((Remainder._get_("TimeOutStart").schedule(int(time.time()), event.admin_id, [[left_team_name if data[1] == "0" else right_team_name], ], f"period_{period_count}_event_{self.event_id}_technical_time_out_score_{':'.join(score)}", [[], ])))
                 
-                rv.extend((Remainder._get_("TimeOutEnd").schedule(int(time.time()) + int(rules_set.technical_time_outs_lenghts_per_period.split(";")[period_count-1]), self.admin_id, [[left_team_name if data[1] is "0" else right_team_name] ,], f"period_{period_count}_event_{self.event_id}_technical_time_out_score_{':'.join(score)}", [[], ])))
+                rv.extend((Remainder._get_("TimeOutEnd").schedule(int(time.time()) + int(rules_set.technical_time_outs_lenghts_per_period.split(";")[period_count-1]), event.admin_id, [[left_team_name if data[1] == "0" else right_team_name] ,], f"period_{period_count}_event_{self.event_id}_technical_time_out_score_{':'.join(score)}", [[], ])))
 
             # check tehcnical time out
             x,y = rules_set.technical_time_outs_at_score_per_period.split(";")[len(TimeOut._get_({"event_id": self.event_id}))].split(",")
             if self.status == 1 and ((score[0] == x or x == "0") and (score[1] == y or y == "0")) and not check_sent_already(130, f"period_{period_count}_event_{self.event_id}_technical_time_out_score_{':'.join(score)}"):
                 
-                rv.extend((Remainder._get_("TechnicalTimeOutStart").schedule(int(time.time()), self.admin_id, [[] ,], f"period_{period_count}_event_{self.event_id}_technical_time_out_score_{':'.join(score)}", [[], ])))
+                rv.extend((Remainder._get_("TechnicalTimeOutStart").schedule(int(time.time()), event.admin_id, [[] ,], f"period_{period_count}_event_{self.event_id}_technical_time_out_score_{':'.join(score)}", [[], ])))
                 
-                rv.extend((Remainder._get_("TechnicalTimeOutEnd").schedule(int(time.time()) + int(rules_set.technical_time_outs_lenghts_per_period.split(";")[period_count-1]), self.admin_id, [[] ,], f"period_{period_count}_event_{self.event_id}_technical_time_out_score_{':'.join(score)}", [[], ])))
+                rv.extend((Remainder._get_("TechnicalTimeOutEnd").schedule(int(time.time()) + int(rules_set.technical_time_outs_lenghts_per_period.split(";")[period_count-1]), event.admin_id, [[] ,], f"period_{period_count}_event_{self.event_id}_technical_time_out_score_{':'.join(score)}", [[], ])))
 
         def check_period_end():
 
@@ -515,14 +905,17 @@ class Period(LogicModel):
         def check_pause_resume():
             return data[0] == "pauseResume"
 
+        def check_ball_control():
+            return data[0] == "ballControl"
+
         data = command.split("_")
 
         check_remainders()
 
-        if check_point():
+        if check_point(): #point_team_type
             
             obj = Point()
-            obj.happen(self.event_id, self.id, self.left_team_id if data[1] == "0" else self.right_team_id, ":".join(score), data[2])
+            obj.happen(self.event_id, self.id, self.left_team_id if data[1] == "0" else self.right_team_id, f"{score[0]}:{score[1]}", data[2])
             obj.save()
             
             obj.value = rules_set.points_per_score_per_period.split(";")[period_count-1].split(",")[obj.team_id != self.left_team_id]
@@ -578,7 +971,20 @@ class Period(LogicModel):
 
             rv.extend(event.show_match_template())
 
-            self.sho
+        if check_ball_control():
+
+            self.ball_possesion_team_id = self.left_team_id if data[1] == "0" else self.right_team_id if data[1] == "2" else -1
+            self.save()
+
+            rv.extend(event.show_match_template())
+
+        if len(rv) == 0:
+            if self.is_paused:
+                rv.extend(event.show_paused_match_template())
+            else:
+                rv.extend(event.show_match_template())
+
+        return rv
 
     def cancel(self): #TODO JSON
         pass
@@ -613,17 +1019,17 @@ class RulesSet(LogicModel):
     min_difference_points_to_win_period = models.CharField(max_length=5096, default=';') #
 
     points_per_score_per_period = models.CharField(max_length=5096, default=';') #
-    scores_names = models.CharField(max_length=5096, default=';')
+    scores_names = models.CharField(max_length=5096, default=';') #######
 
     event_length_minutes = models.IntegerField(default=0) # 
     periods_lenght_minutes = models.CharField(max_length=5096, default=';') #
 
     interval_between_periods_munutes = models.CharField(max_length=5096, default=';')
 
-    event_timer_direction = models.IntegerField(default=0)
-    period_timers_directions = models.CharField(max_length=5096, default=';')
+    event_timer_direction = models.IntegerField(default=0) #######
+    period_timers_directions = models.CharField(max_length=5096, default=';') #######
 
-    timers_stop_at_pauses = models.IntegerField(default=0)
+    timers_stop_at_pauses = models.IntegerField(default=0) #
 
     side_changes_after_periods = models.CharField(max_length=5096, default=';') #
     side_changes_during_periods = models.CharField(max_length=5096, default=';') # 
@@ -638,7 +1044,7 @@ class RulesSet(LogicModel):
     technical_time_outs_lenghts_per_period = models.CharField(max_length=5096, default=';') #
     technical_time_outs_at_score_per_period = models.CharField(max_length=5096, default=';') #
     
-    actions_list = models.CharField(max_length=5096, default=';')
+    actions_list = models.CharField(max_length=5096, default=';') #######
     
     event_start_remainder_minutes_before = models.CharField(max_length=5096, default=';') #
     event_end_remainder_minutes_before = models.CharField(max_length=5096, default=';') #
@@ -774,17 +1180,17 @@ class Point(LogicModel):
     point_type = models.IntegerField(default=-1)
     value = models.IntegerField(default=1)
 
-    def happen(self, event_id, period_id, team_id, at_score, point_type):
+    def happen(self, event_id, period_id, team_id, at_score, type):
         
         self.event_id = event_id
         self.period_id = period_id
         self.team_id = team_id
         self.at_score = at_score
-        self.point_type = point_type
+        self.type = type
         self.epoch_time = str(time.time())
         self.save()
 
-        period = Period._get_(self.period_id)[0]
+        period = Period._get_({"id":self.period_id})[0]
         period.points_ids = period.points_ids + str(self.id) + ";"
         period.save()
 
@@ -1028,6 +1434,22 @@ class ScheduledMessage(models.Model):
 
 # LOCALIZATION
 class TextString(models.Model): #TODO make connection with outside dictionary
+
+    @classmethod
+    def _get_(cls, params):
+
+        rv = []
+
+        for obj in cls.objects.all():
+            
+            true = True
+            for k, v in params.items():
+                if getattr(obj, k) != v:
+                    true = False
+            
+            if true: rv.append(obj)
+
+        return rv
 
     screen_id = models.CharField(max_length=5096, default="")
     position_index = models.IntegerField(default=-1)

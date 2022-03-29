@@ -17,8 +17,39 @@ class EventScheduled(Remainder):
 
     def button_1(self, params, user_id, scheduled_message_id):      
         
-        return Utils.api("execute_method",
+        event_id, event_status, event_periods_ids, rules_set_id = Utils.api("get",
         model="Event",
         params={"id": int(params[0])},
-        method={"name": "run", "params": []}
+        fields=["id", "status", "periods_ids", "rules_set_id"]
         )[0]
+
+        coin_tosses_before_periods = Utils.api("get",
+        model="RulesSet",
+        params={"id": rules_set_id},
+        fields=["coin_tosses_before_periods"]
+        )[0][0]
+
+        period_count = 0
+        for period_id in event_periods_ids.split(";"):
+            if period_id:
+                period_count += 1
+
+        if coin_tosses_before_periods.split(";")[period_count] == "1":
+            
+            return Utils.api("execute_method",
+            model="Event",
+            params={"id": int(params[0])},
+            method={"name": "run", "params": ["coinToss_"]})[0]
+        
+        else: #TODO check?
+            
+            period_id = Utils.api("get_or_make",
+            model="Period",
+            params={"event_id": event_id, "status": 0},
+            fields=["id"],)[0][0]
+
+            return Utils.api("execute_method",
+            model="Period",
+            params={"id": period_id},
+            method={"name": "start", "params": []}
+            )[0]

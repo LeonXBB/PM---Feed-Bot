@@ -5,7 +5,7 @@ class TimeOutEnd(Remainder):
 
     def get_keyboards(self):
         
-        ok = {"text": self.strings[1][0], "data": "r_0_21_{}"}
+        ok = {"text": self.strings[1][0], "data": "r_0_21_0"}
         
         layout = [(ok,),]
         

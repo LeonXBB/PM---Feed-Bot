@@ -5,7 +5,7 @@ class SideChangeHappens(Remainder):
 
     def get_keyboards(self):
         
-        ok = {"text": self.strings[1][0], "data": "r_0_50_{}"}
+        ok = {"text": self.strings[1][0], "data": "r_0_50_0"}
 
         layout = [(ok,),]
 

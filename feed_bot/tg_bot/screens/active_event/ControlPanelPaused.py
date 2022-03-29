@@ -1,18 +1,18 @@
+from decouple import config
+
 from ...bin.utils import Utils
 from ..Screen import Screen
 
 
 class ControlPanelPaused(Screen):
 
-    #def get_strings(self):
-    #    return super().get_strings(via)
 
     def get_keyboards(self):
         
-        resume = {"text": self.strings[1][0], "data": "0_{}}"}
+        resume = {"text": self.strings[1][0], "data": "0_{}"}
      
-        cancel = {"text": self.strings[1][0], "data": "1_{}"}
-        main_menu = {"text": self.strings[1][0], "data": "2_{}"}
+        cancel = {"text": self.strings[1][1], "data": "1_{}"}
+        main_menu = {"text": self.strings[1][2], "data": "2_{}"}
         
         layout = [(resume, ), (cancel, main_menu)]
 
@@ -21,13 +21,24 @@ class ControlPanelPaused(Screen):
     def __init__(self, via) -> None:
 
         super().__init__(via, "31", "ControlPanelPaused")
-        #delattr(self, "strings")
             
     def button_0(self, params, user_id): # resume
-        pass
+        
+        event_id = int(params[0])
+
+        return Utils.api("execute_method",
+        model="Period",
+        params={"id": event_id},
+        method={"name": "run", "params": ["pauseResume_"]}
+        )[0]
 
     def button_1(self, params, user_id): # cancel
         pass
 
     def button_2(self, params, user_id): # main_menu
-        pass
+        
+        return Utils.api("execute_method",
+        model="BotUser",
+        params={"id": user_id},
+        method={"name": "show_screen_to", "params": ["10", [[config("telebot_version")]]]} #TODO static formatters into separate file
+        )[0]

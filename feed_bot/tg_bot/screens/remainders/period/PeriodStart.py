@@ -17,8 +17,14 @@ class PeriodStart(Remainder):
 
     def button_0(self, params, user_id, scheduled_message_id):
         
-        return Utils.api("execute_method", # TODO figure out
+        Utils.api("execute_method",
         model="Period",
         params={"id": int(params[0])},
-        method={"name": "run", "params": ["init"]}
+        method={"name": "launch", "params": []}
+        )
+
+        return Utils.api("execute_method",
+        model="Period",
+        params={"id": int(params[0])},
+        method={"name": "run", "params": []}
         )[0]
