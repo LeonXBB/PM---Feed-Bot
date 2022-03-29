@@ -32,6 +32,12 @@ class EventPanelActive(Screen):
         fields=["id", "status", "periods_ids", "rules_set_id"]
         )[0]
 
+        period_count = 0
+        for period_id in event_periods_ids.split(";"):
+            if period_id:
+                period_count += 1
+                last_period_id = int(period_id)
+
         if event_status == 0: # being created
             
             return Utils.api("execute_method",
@@ -48,6 +54,35 @@ class EventPanelActive(Screen):
             fields=["coin_tosses_before_periods"]
             )[0][0]
 
+            if coin_tosses_before_periods.split(";")[period_count] == "1":
+                
+                return Utils.api("execute_method",
+                model="Event",
+                params={"id": event_id},
+                method={"name": "run", "params": ["coinToss_"]})[0]
+            
+            else:
+                
+                Utils.api("execute_method",
+                model="Period",
+                params={"id": last_period_id},
+                method={"name": "launch", "params": []}
+                )
+
+                return Utils.api("execute_method",
+                model="Period",
+                params={"id": last_period_id},
+                method={"name": "run", "params": []}
+                )[0]
+
+        elif event_status == 3: #between periods
+            
+            coin_tosses_before_periods = Utils.api("get",
+            model="RulesSet",
+            params={"id": rules_set_id},
+            fields=["coin_tosses_before_periods"]
+            )[0][0]
+
             period_count = 0
             for period_id in event_periods_ids.split(";"):
                 if period_id:
@@ -57,36 +92,24 @@ class EventPanelActive(Screen):
                 
                 return Utils.api("execute_method",
                 model="Event",
-                params={"id": int(params[0])},
+                params={"id": event_id},
                 method={"name": "run", "params": ["coinToss_"]})[0]
             
-            else: #TODO check?
+            else:
                 
-                period_id = Utils.api("get_or_make",
+                Utils.api("execute_method",
                 model="Period",
-                params={"event_id": event_id, "status": 0},
-                fields=["id"],)[0][0]
+                params={"id": last_period_id},
+                method={"name": "launch", "params": []}
+                )
 
                 return Utils.api("execute_method",
                 model="Period",
-                params={"id": period_id},
-                method={"name": "start", "params": []}
+                params={"id": last_period_id},
+                method={"name": "run", "params": []}
                 )[0]
 
-        elif event_status == 3: #between periods #TODO check
-            
-            period_id = Utils.api("get_or_make",
-            model="Period",
-            params={"event_id": event_id, "status": 0},
-            fields=["id"],)[0][0]
-
-            return Utils.api("execute_method",
-            model="Period",
-            params={"id": period_id},
-            method={"name": "start", "params": []}
-            )[0]
-
-        elif event_status == 2: #in progress #TODO check
+        elif event_status == 2: #in progress
             
             is_paused = 0
 

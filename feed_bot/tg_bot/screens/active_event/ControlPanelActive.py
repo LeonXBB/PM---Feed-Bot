@@ -25,10 +25,10 @@ class ControlPanelActive(Screen):
         )[0]
 
         period_id = data[4][0][0]
-        left_team_id, right_team_id, ball_possesion_team_id, event_id, time_outs_ids = Utils.api("get",
+        left_team_id, right_team_id, ball_possesion_team_id, event_id, timeouts_ids = Utils.api("get",
         model="Period",
         params={"id": int(period_id)},
-        fields=["left_team_id", "right_team_id", "ball_possesion_team_id", "event_id", "time_outs_ids"]
+        fields=["left_team_id", "right_team_id", "ball_possesion_team_id", "event_id", "timeouts_ids"]
         )[0]
 
         rules_set_id, periods_ids = Utils.api("get",
@@ -38,7 +38,7 @@ class ControlPanelActive(Screen):
         )[0]
 
         period_count = 0
-        for period_id in periods_ids:
+        for period_id in periods_ids.split(";"):
             if period_id:
                 period_count += 1
             
@@ -68,21 +68,21 @@ class ControlPanelActive(Screen):
         if max(list( int(time_out_per_team) for time_out_per_team in (time_outs_per_team_per_period.split(";")[period_count - 1].split(",")) )) > 0:
             
             time_outs_count = [0, 0]
-            for time_out_id in time_outs_ids:
+            for time_out_id in timeouts_ids.split(";"):
                 
                 if time_out_id:
                     team_id = Utils.api("get",
                     model="TimeOut",
-                    params={"id": time_out_id},
+                    params={"id": int(time_out_id)},
                     fields=["team_id"]
-                    )[0]
+                    )[0][0]
                     time_outs_count[team_id != left_team_id] += 1
         
             for team in range(2):
                 if time_outs_count[team] < int(time_outs_per_team_per_period.split(";")[period_count - 1].split(",")[team]):
-                    time_outs.append({"text": self.strings[1][4], "data": f"4_{team}_0" + "_{}"})
+                    time_outs.append({"text": self.strings[1][4], "data": f"4_{team}_1" + "_{}"})
                 else:
-                    time_outs.append({"text": self.strings[1][3], "data": f"4_{team}_1" + "_{}"})
+                    time_outs.append({"text": self.strings[1][3], "data": f"4_{team}_0" + "_{}"})
 
         for i, action in enumerate(actions_list.split(";")):
             actions.append(list())
@@ -127,8 +127,6 @@ class ControlPanelActive(Screen):
 
         elif params[1] == "0": # ball_control
             
-            print(params)
-
             button_number = int(params[0]) # 0 - left, 1 - neutral, 2 - right
 
             event_id = int(params[2])
@@ -150,7 +148,24 @@ class ControlPanelActive(Screen):
         )[0]
 
     def button_4(self, params, user_id): # time out
-        pass
+        
+        team, active, period_id = params
+
+        if active == "1":
+
+            return Utils.api("execute_method",
+            model="Period",
+            params={"id": int(period_id)},
+            method={"name": "run", "params": [f"timeOut_{team}", ]}
+            )[0]
+
 
     def button_5(self, params, user_id): # action
-        pass
+        
+        team, action_type, period_id = params
+
+        return Utils.api("execute_method",
+        model="Period",
+        params={"id": int(period_id)},
+        method={"name": "run", "params": [f"action_{team}_{action_type}", ]}
+        )[0]

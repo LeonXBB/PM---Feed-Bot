@@ -18,7 +18,7 @@ class EventAboutToStart(Remainder):
 
     def button_1(self, params, user_id, scheduled_message_id):
 
-        period_id = Utils.api("get_or_make",
+        period_id = Utils.api("get",
         model="Period",
         params={"event_id": int(params[0]), "status": 0},
         fields=["id"],)[0][0]

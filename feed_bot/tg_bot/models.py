@@ -17,13 +17,17 @@ class LogicModel(models.Model):
     
     @classmethod
     def _get_(cls, params):
-        
+
         rv = []
-        
+
         for obj in cls.objects.all():
-            for k,v in params.items():
-                if getattr(obj, k) == v:
-                    rv.append(obj)
+            
+            true = True
+            for k, v in params.items():
+                if getattr(obj, k) != v:
+                    true = False
+            
+            if true: rv.append(obj)
 
         return rv
 
@@ -154,9 +158,9 @@ class Event(LogicModel):  #TODO move template to different class?
         for period_id in self.periods_ids.split(";"):
             if period_id:
 
-                time_outs_all.append(list())
+                time_outs_all.append([0, 0])
                 for action_type in actions_all:
-                    action_type.append(list())
+                    action_type.append([0, 0])
 
                 period = Period._get_({"id": int(period_id)})[0]
 
@@ -177,17 +181,18 @@ class Event(LogicModel):  #TODO move template to different class?
                                     points_by_type_by_period[i][-1][1] += point.value
                                     sum_points_by_period[-1][1] += point.value
 
-                if sum_points_by_period[-1][0] > sum_points_by_period[-1][1]:
-                    periods_score[0] += 1
-                elif sum_points_by_period[-1][0] < sum_points_by_period[-1][1]:
-                    periods_score[1] += 1
+                if period.status == 2:
+                    if sum_points_by_period[-1][0] > sum_points_by_period[-1][1]:
+                        periods_score[0] += 1
+                    elif sum_points_by_period[-1][0] < sum_points_by_period[-1][1]:
+                        periods_score[1] += 1
 
-                for time_out_id in current_period.time_outs_ids.split(";"):
+                for time_out_id in current_period.timeouts_ids.split(";"):
                     if time_out_id:
-                        time_out = TimeOut._get_({"id": str(time_out_id)})[0]
+                        time_out = TimeOut._get_({"id": int(time_out_id)})[0]
                         if time_out.team_id == current_period.left_team_id:
                             time_outs_all[-1][0] += 1
-                        else:
+                        elif time_out.team_id == current_period.right_team_id:
                             time_outs_all[-1][1] += 1
 
                 for action_id in current_period.actions_ids.split(";"):
@@ -196,7 +201,7 @@ class Event(LogicModel):  #TODO move template to different class?
                         if action.team_id == current_period.left_team_id:
                             actions_all[action.type_id][-1][0] += 1
                         else:
-                            actions_all[action.type_id][-1][0] += 1
+                            actions_all[action.type_id][-1][1] += 1
 
         ball = getattr(TextString._get_({"screen_id": "active", "position_index": 0})[0], f"language_{admin.language_id + 1}")
         left_ball = ball if current_period.ball_possesion_team_id == current_period.left_team_id else ""
@@ -256,7 +261,7 @@ class Event(LogicModel):  #TODO move template to different class?
 
             time_out_string = f"\n\n{time_out_word}: {time_outs_1} - {time_outs_2} ({time_outs_1_total} - {time_outs_2_total})"
 
-        bottom_string = f"{time_out_string}"
+        bottom_string = f"{time_out_string}\n"
 
         for i, action in enumerate(rules_set.actions_list.split(";")):
             if action:
@@ -337,9 +342,9 @@ class Event(LogicModel):  #TODO move template to different class?
         for period_id in self.periods_ids.split(";"):
             if period_id:
 
-                time_outs_all.append(list())
+                time_outs_all.append([0, 0])
                 for action_type in actions_all:
-                    action_type.append(list())
+                    action_type.append([0, 0])
 
                 period = Period._get_({"id": int(period_id)})[0]
 
@@ -360,17 +365,18 @@ class Event(LogicModel):  #TODO move template to different class?
                                     points_by_type_by_period[i][-1][1] += point.value
                                     sum_points_by_period[-1][1] += point.value
 
-                if sum_points_by_period[-1][0] > sum_points_by_period[-1][1]:
-                    periods_score[0] += 1
-                elif sum_points_by_period[-1][0] < sum_points_by_period[-1][1]:
-                    periods_score[1] += 1
+                if period.status == 2:
+                    if sum_points_by_period[-1][0] > sum_points_by_period[-1][1]:
+                        periods_score[0] += 1
+                    elif sum_points_by_period[-1][0] < sum_points_by_period[-1][1]:
+                        periods_score[1] += 1
 
-                for time_out_id in current_period.time_outs_ids.split(";"):
+                for time_out_id in current_period.timeouts_ids.split(";"):
                     if time_out_id:
                         time_out = TimeOut._get_({"id": int(time_out_id)})[0]
                         if time_out.team_id == current_period.left_team_id:
                             time_outs_all[-1][0] += 1
-                        else:
+                        elif time_out.team_id == current_period.right_team_id:
                             time_outs_all[-1][1] += 1
 
                 for action_id in current_period.actions_ids.split(";"):
@@ -379,7 +385,7 @@ class Event(LogicModel):  #TODO move template to different class?
                         if action.team_id == current_period.left_team_id:
                             actions_all[action.type_id][-1][0] += 1
                         else:
-                            actions_all[action.type_id][-1][0] += 1
+                            actions_all[action.type_id][-1][1] += 1
 
         ball = getattr(TextString._get_({"screen_id": "active", "position_index": 0})[0], f"language_{admin.language_id + 1}")
         left_ball = ball if current_period.ball_possesion_team_id == current_period.left_team_id else ""
@@ -439,7 +445,7 @@ class Event(LogicModel):  #TODO move template to different class?
 
             time_out_string = f"\n\n{time_out_word}: {time_outs_1} - {time_outs_2} ({time_outs_1_total} - {time_outs_2_total})"
 
-        bottom_string = f"{time_out_string}"
+        bottom_string = f"{time_out_string}\n"
 
         for i, action in enumerate(rules_set.actions_list.split(";")):
             if action:
@@ -500,7 +506,7 @@ class Event(LogicModel):  #TODO move template to different class?
         day, month, year = self.date_scheduled.split("-")
         hour, minute = self.time_scheduled.split(":")
 
-        self.start_scheduled_epoch = str(int(datetime.datetime(int(year), int(month), int(day), int(hour), int(minute)).timestamp()))   
+        self.start_scheduled_epoch = str(int(datetime.datetime(int(year), int(month), int(day), int(hour), int(minute)).timestamp())).split(".")[0] 
 
         if rules_set.event_length_minutes == 0:
             self.end_scheduled_epoch= "0"
@@ -522,7 +528,10 @@ class Event(LogicModel):  #TODO move template to different class?
         self.save()
         
         admin = BotUser._get_({"id": self.admin_id})[0]
-        return admin.show_screen_to("10", [[config("telebot_version")], ]) #TODO static formatter
+
+        rv = [admin.show_screen_to("10", [[config("telebot_version")], ], ), *self.run()] #TODO static formatter 
+
+        return rv
 
     def run(self, command="_"): #TODO JSON
         
@@ -537,6 +546,32 @@ class Event(LogicModel):  #TODO move template to different class?
         for period_id in self.periods_ids.split(";"):
             if period_id:
                 period_count += 1
+
+        point_score = []
+
+        for period_id in self.periods_ids.split(";"):
+            if period_id:
+                period = Period._get_({"id": int(period_id)})[0]
+                point_score.append([0, 0])
+
+                for point_id in period.points_ids.split(";"):
+                    if point_id:
+                        point = Point._get_({"id": int(point_id)})[0]                           
+                        point_score[-1][0 if point.team_id == self.home_team_id else 1] += point.value
+
+            int_score = [0, 0] #TODO rename
+
+            for sublist in point_score:
+                if sublist[0] > sublist[1]:
+                    int_score[0] += 1
+                elif sublist[0] < sublist[1]:
+                    int_score[1] += 1
+
+            score_sum = [0, 0]
+
+            for sublist in point_score:
+                score_sum[0] += sublist[0]
+                score_sum[1] += sublist[1]
 
         def check_remainders():
 
@@ -588,70 +623,57 @@ class Event(LogicModel):  #TODO move template to different class?
             if self.status == 3 and rules_set.side_changes_after_periods.split(';')[period_count - 1] == 1 and not check_sent_already(150, f"event_{self.id}_side_change_after_perid_{period_count}"):
                 rv.extend((Remainder._get_("SideChangeHappens").schedule(int(time.time()), self.admin_id, [[] ,], f"event_{self.id}_side_change_after_perid_{period_count}", [[], ])))
 
+            # check event ended:
+            if self.status == 4 and not check_sent_already(105, f"event_{self.id}_ended"):
+                rv.extend(Remainder._get_("EventEnded").schedule(int(time.time()), self.admin_id, [[self.id, home_team_name, away_team_name] ,], f"event_{self.id}_ended", [[self.id, self.id], ]))
+
         def check_coin_toss():
             return data[0] == "coinToss"
 
         def check_end():
-            
-            point_score = {self.home_team_id: {} , self.away_team_id: {}}
-
-            for period_id in self.periods_ids:
-                if period_id:
-                    if res := len(Period._get_({"id": period_id})) > 0:
-                        period = res[0]
-                    
-                        for point_id in period.points_ids:
-                            if point_id:
-                                point = Point._get_({"id": point_id})[0]
-                                if period_id not in list(point_score[point.team_id].keys()):
-                                    point_score[point.team_id][period_id] = 0
-                                
-                                point_score[point.team_id][period_id] += point.score
 
             def check_end_by_score_period():
-                
-                int_score = [0, 0]
-
-                for period_id in self.periods_ids.split(";"):
-                    if period_id:
-                        if point_score[self.home_team_id][period_id] > point_score[self.home_team_id][period_id]:
-                            int_score[0] += 1
-                        elif point_score[self.home_team_id][period_id] < point_score[self.home_team_id][period_id]:
-                            int_score[1] += 1
-                        else:
-                            int_score[0] += 1
-                            int_score[1] += 1
-
-                return rules_set.win_event_by == 2 and (((max(int_score) >= rules_set.periods_to_win_event and rules_set.stop_event_after_enough_periods == 1) or max(int_score) > rules_set.periods_in_event) and max(int_score) - min(int_score) > rules_set.min_difference_to_win_event)
+                return rules_set.win_event_by == 2 and (((max(int_score) >= rules_set.periods_to_win_event and rules_set.stop_event_after_enough_periods == 1) or max(int_score) > rules_set.periods_in_event) and max(int_score) - min(int_score) > rules_set.min_difference_periods_to_win_event)
 
             def check_end_by_score_sum():
-
-                score_sum = [0, 0]
-
-                for period_id in self.periods_ids.split(";"):
-                    if period_id:
-                        score_sum[0] += point_score[self.home_team_id][period_id]
-                        score_sum[1] += point_score[self.away_team_id][period_id]
-
-                return rules_set.win_event_by == 2 and (((max(score_sum) >= rules_set.periods_to_win_event and rules_set.stop_event_after_enough_periods == 1) or max(score_sum) > rules_set.periods_in_event) and max(score_sum) - min(score_sum) > rules_set.min_difference_to_win_event)
+                return rules_set.win_event_by == 3 and (((max(score_sum) >= rules_set.periods_to_win_event and rules_set.stop_event_after_enough_periods == 1) or max(score_sum) > rules_set.periods_in_event) and max(score_sum) - min(score_sum) > rules_set.min_difference_periods_to_win_event)
 
             return check_end_by_score_period() or check_end_by_score_sum()
 
         def check_side_change():
-            return self.status == 3 and rules_set.side_changes_after_periods.split(';')[period_count - 1] == 1
+            try: #TODO check lenght instead of try
+                return self.status == 3 and rules_set.side_changes_after_periods.split(';')[period_count - 1] == "1"
+            except:
+                return False
+
+        def check_new_period():
+            for period_id in self.periods_ids.split(";"):
+                if period_id:
+                    period = Period._get_({"id": int(period_id)})[0]
+
+            print(self.status == 3, rules_set.coin_tosses_before_periods.split(";")[period_count] == "1", period.status == 0)
+            return self.status == 3 and not rules_set.coin_tosses_before_periods.split(";")[period_count] == "1" and not period.status == 0
 
         data = command.split("_")
 
         check_remainders()
 
         if check_end():
-            self.end()
+            return self.end()
+
+        if check_new_period():
+
+            new_period = Period()
+            new_period.event_id = self.id
+            new_period.save()
+
+            rv.extend(new_period.start())
 
         if check_side_change():
             
             obj = SideChange()
 
-            obj.happen()
+            obj.happen(self.id, -1, f"{int_score[0]}:{int_score[1]}")
             obj.save()
 
         if check_coin_toss():
@@ -665,7 +687,7 @@ class Event(LogicModel):  #TODO move template to different class?
             self.save()
 
             rv.extend(obj.show_template())
-
+        
         return rv
 
     def cancel(self, task): #TODO JSON
@@ -706,13 +728,16 @@ class Period(LogicModel):
     right_team_id = models.IntegerField(default=-1)
     ball_possesion_team_id = models.IntegerField(default=-1)
 
+    original_left_team_id = models.IntegerField(default=-1)
+    original_right_team_id = models.IntegerField(default=-1)
+    original_ball_possesion_team_id = models.IntegerField(default=-1)
+
     is_paused = models.IntegerField(default=0)
 
-    time_outs_ids = models.CharField(max_length=5096, default=";")
+    timeouts_ids = models.CharField(max_length=5096, default=";")
     points_ids = models.CharField(max_length=5096, default=";")
     actions_ids = models.CharField(max_length=5096, default=";")
     side_changes_ids = models.CharField(max_length=5096, default=";")
-    timers_ids = models.CharField(max_length=5096, default=";")
 
     def start(self): #TODO JSON
         
@@ -724,22 +749,29 @@ class Period(LogicModel):
         
         if periods_count == 1:
             # 1st event
-            self.start_scheduled_epoch = event.start_scheduled_epoch 
+            self.start_scheduled_epoch = event.start_scheduled_epoch
 
             if self.left_team_id == -1 or self.right_team_id == -1 or self.ball_possesion_team_id == -1:
                 self.left_team_id = event.home_team_id
                 self.right_team_id = event.away_team_id
                 self.ball_possesion_team_id = event.home_team_id
 
+                self.original_left_team_id = event.home_team_id
+                self.original_right_team_id = event.away_team_id
+                self.orgiginal_ball_possesion_team_id = event.home_team_id
+
         else:
             # 2nd event or more
-            self.start_scheduled_epoch = Period._get_({"event_id": self.event_id, "status": 2})[-1].end_actual_epoch + rules_set.interval_between_periods_munutes.split(";")[periods_count - 1] * 60 #TODO check if we need to substract 2
+            self.start_scheduled_epoch = str(int(Period._get_({"event_id": self.event_id, "status": 2})[-1].end_actual_epoch) + int(rules_set.interval_between_periods_munutes.split(";")[periods_count - 1]) * 60) #TODO check if we need to substract 2
  
             if self.left_team_id == -1 or self.right_team_id == -1 or self.ball_possesion_team_id == -1:
-                self.left_team_id = Period._get_({"event_id": self.event_id, "status": 2})[-1].left_team_id
-                self.right_team_id = Period._get_({"event_id": self.event_id, "status": 2})[-1].right_team_id
-                self.ball_possesion_team_id = Period._get_({"event_id": self.event_id, "status": 2})[-1].ball_possesion_team_id
-        
+                self.left_team_id = Period._get_({"event_id": self.event_id, "status": 2})[-1].original_left_team_id
+                self.right_team_id = Period._get_({"event_id": self.event_id, "status": 2})[-1].original_right_team_id
+                self.ball_possesion_team_id = Period._get_({"event_id": self.event_id, "status": 2})[-1].original_ball_possesion_team_id
+
+                self.original_left_team_id = Period._get_({"event_id": self.event_id, "status": 2})[-1].original_left_team_id
+                self.original_right_team_id = Period._get_({"event_id": self.event_id, "status": 2})[-1].original_right_team_id
+                self.orgiginal_ball_possesion_team_id = Period._get_({"event_id": self.event_id, "status": 2})[-1].original_ball_possesion_team_id
 
         if rules_set.periods_lenght_minutes.split(";")[periods_count - 1] == "0":
             self.end_scheduled_epoch = "0"
@@ -757,11 +789,11 @@ class Period(LogicModel):
                 
     def end(self): #TODO JSON
         
-        self.status = 3
-        self.end_actual_epoch = str(time.time())
+        self.status = 2
+        self.end_actual_epoch = int(time.time())
         self.save()
 
-        Remainder.unschedule(f"event_{self.event.id}_end")
+        Remainder.unschedule(f"event_{self.id}_end")
 
         event = Event._get_({"id": self.event_id})[0]
         event.status = 3
@@ -806,7 +838,7 @@ class Period(LogicModel):
         self.save()
         event.save()
 
-    def run(self, command="_") -> None: #TODO JSON
+    def run(self, command="_"): #TODO JSON
         
         rv = []
 
@@ -824,8 +856,29 @@ class Period(LogicModel):
         score = [0,0]
         for point_id in self.points_ids.split(";"):
             if point_id:
-                point = Point._get_({"id": point_id})[0]
-                score[point.team_id != self.left_team_id] += 1
+                point = Point._get_({"id": int(point_id)})[0]
+                score[point.team_id != self.left_team_id] += point.value
+
+        def tto_now():
+            
+            total_technical_time_outs_this_period = len(TimeOut._get_({"event_id": self.event_id, "is_technical": 1}))
+            
+            for i, comma_scores in enumerate(rules_set.technical_time_outs_at_score_per_period.split(";")):
+                if comma_scores:
+                    try:
+                        x, y = comma_scores.split(",")
+                        if total_technical_time_outs_this_period >= i:
+                            if x == "0" or y == "0":
+                                res = (score[0] == int(x) if x != "0" else int(y)) or (score[1] == int(x) if x != "0" else int(y))
+                            else:
+                                res = score[0] == int(x) and score[1] == int(y)
+                        else:
+                            break
+                    except:
+                        sum_score = comma_scores
+                        res = sum(score) == int(sum_score)
+
+            return res
 
         def check_remainders():
             
@@ -868,25 +921,40 @@ class Period(LogicModel):
             # check time_out
             if data[0] == "timeOut":
                 
-                rv.extend((Remainder._get_("TimeOutStart").schedule(int(time.time()), event.admin_id, [[left_team_name if data[1] == "0" else right_team_name], ], f"period_{period_count}_event_{self.event_id}_technical_time_out_score_{':'.join(score)}", [[], ])))
+                rv.extend((Remainder._get_("TimeOutStart").schedule(int(time.time()), event.admin_id, [[left_team_name if data[1] == "0" else right_team_name], ], f"period_{period_count}_event_{self.event_id}_time_out_team_{data[1]}_score_{score[0]}:{score[1]}", [[], ])))
                 
-                rv.extend((Remainder._get_("TimeOutEnd").schedule(int(time.time()) + int(rules_set.technical_time_outs_lenghts_per_period.split(";")[period_count-1]), event.admin_id, [[left_team_name if data[1] == "0" else right_team_name] ,], f"period_{period_count}_event_{self.event_id}_technical_time_out_score_{':'.join(score)}", [[], ])))
+                rv.extend((Remainder._get_("TimeOutEnd").schedule(int(time.time()) + int(rules_set.time_outs_lenghts_per_team_per_period.split(";")[period_count-1].split(',')[int(data[1])]), event.admin_id, [[left_team_name if data[1] == "0" else right_team_name] ,], f"period_{period_count}_event_{self.event_id}_time_out_team_{data[1]}_score_{score[0]}:{score[1]}", [[], ])))
 
             # check tehcnical time out
-            x,y = rules_set.technical_time_outs_at_score_per_period.split(";")[len(TimeOut._get_({"event_id": self.event_id}))].split(",")
-            if self.status == 1 and ((score[0] == x or x == "0") and (score[1] == y or y == "0")) and not check_sent_already(130, f"period_{period_count}_event_{self.event_id}_technical_time_out_score_{':'.join(score)}"):
+            if self.status == 1 and tto_now() and not check_sent_already(130, f"period_{period_count}_event_{self.event_id}_technical_time_out_score_{score[0]}:{score[1]}"):
                 
-                rv.extend((Remainder._get_("TechnicalTimeOutStart").schedule(int(time.time()), event.admin_id, [[] ,], f"period_{period_count}_event_{self.event_id}_technical_time_out_score_{':'.join(score)}", [[], ])))
+                rv.extend((Remainder._get_("TechnicalTimeOutStart").schedule(int(time.time()), event.admin_id, [[] ,], f"period_{period_count}_event_{self.event_id}_technical_time_out_score_{score[0]}:{score[1]}", [[], ])))
                 
-                rv.extend((Remainder._get_("TechnicalTimeOutEnd").schedule(int(time.time()) + int(rules_set.technical_time_outs_lenghts_per_period.split(";")[period_count-1]), event.admin_id, [[] ,], f"period_{period_count}_event_{self.event_id}_technical_time_out_score_{':'.join(score)}", [[], ])))
+                rv.extend((Remainder._get_("TechnicalTimeOutEnd").schedule(int(time.time()) + int(rules_set.technical_time_outs_lenghts_per_period.split(";")[period_count-1]), event.admin_id, [[] ,], f"period_{period_count}_event_{self.event_id}_technical_time_out_score_{score[0]}:{score[1]}", [[], ])))
+
+            # check ended
+            if self.status == 2 and not check_sent_already(115, f"period_{period_count}_event_{self.event_id}_ended"):
+                rv.extend(Remainder._get_("PeriodEnded").schedule(int(time.time()), event.admin_id, [[period_count, self.event_id, left_team_name, right_team_name] ,], f"period_{period_count}_event_{self.event_id}_ended", [[self.id, self.id], ]))
 
         def check_period_end():
 
-            return rules_set.win_period_by.split(";")[period_count - 1] == "2" and ((max(score) >= int(rules_set.points_to_win_period.split(";")[period_count - 1]) and rules_set.stop_period_after_enough_points.split(";")[period_count - 1] == "1") or max(score) >= int(rules_set.points_in_period.split(";")[period_count - 1]) and max(score) - min(score) >= rules_set.min_difference_points_to_win_period.split(";")[period_count - 1])
+            one = rules_set.win_period_by.split(";")[period_count - 1] == "1"
+            two = (max(score) >= int(rules_set.points_to_win_period.split(";")[period_count - 1]) and rules_set.stop_period_after_enough_points.split(";")[period_count - 1] == "1")
+            three = (rules_set.points_in_period == 0) or max(score) >= int(rules_set.points_in_period.split(";")[period_count - 1])
+            four = max(score) - min(score) >= int(rules_set.min_difference_points_to_win_period.split(";")[period_count - 1])
+
+            print(one)
+            print(two)
+            print(three), 
+            print(four)
+
+            rv = one and two and three and four
+
+            return rv 
 
         def check_technical_time_out():
-            x,y = rules_set.technical_time_outs_at_score_per_period.split(";")[len(TimeOut._get_({"event_id": self.event_id}))].split(",")
-            return self.status == 1 and ((score[0] == x or x == "0") and (score[1] == y or y == "0")) and len(TimeOut._get_({"is_technical": 1, "event_id": self.event_id, "period_id": self.id, "at_score": ":".join(score)})) == 0
+
+            return self.status == 1 and tto_now() and len(TimeOut._get_({"is_technical": 1, "event_id": self.event_id, "period_id": self.id, "at_score": f"{score[0]}:{score[1]}"})) == 0
 
         def check_time_out():
             return data[0] == "timeOut"
@@ -894,7 +962,7 @@ class Period(LogicModel):
         def check_side_change():
             
             x,y = rules_set.side_changes_during_periods_scores.split(";")[len(SideChange._get_({"event_id": self.event_id}))].split(",")
-            return self.status == 1 and rules_set.side_changes_during_periods.split(';')[period_count - 1] == 1 and ((score[0] == x or x == "0") and (score[1] == y or y == "0")) and len(SideChange._get_({"event_id": self.event_id, "period_id": self.id, "at_score": ":".join(score)})) == 0
+            return self.status == 1 and rules_set.side_changes_during_periods.split(';')[period_count - 1] == 1 and ((score[0] == x or x == "0") and (score[1] == y or y == "0")) and len(SideChange._get_({"event_id": self.event_id, "period_id": self.id, "at_score": f"{score[0]}:{score[1]}"})) == 0
 
         def check_action():
             return data[0] == "action"
@@ -910,18 +978,19 @@ class Period(LogicModel):
 
         data = command.split("_")
 
-        check_remainders()
-
         if check_point(): #point_team_type
             
-            obj = Point()
-            obj.happen(self.event_id, self.id, self.left_team_id if data[1] == "0" else self.right_team_id, f"{score[0]}:{score[1]}", data[2])
-            obj.save()
-            
-            obj.value = rules_set.points_per_score_per_period.split(";")[period_count-1].split(",")[obj.team_id != self.left_team_id]
-            obj.save()
+            point_ = Point()
+            point_.happen(self.event_id, self.id, self.left_team_id if data[1] == "0" else self.right_team_id, f"{score[0]}:{score[1]}", data[2])            
+            point_.value = rules_set.points_per_score_per_period.split(";")[period_count-1].split(",")[point_.team_id != self.left_team_id]
+            point_.save()
 
-            score[int(data[1])] += int(obj.value)
+            score[int(data[1])] += int(point_.value)
+
+            self.points_ids = f"{self.points_ids}{point_.id};" #TODO figure out why this is not working inside happen function and make consistant
+            self.save()
+
+        check_remainders()
 
         if check_period_end():
             rv.extend(self.end())
@@ -937,37 +1006,48 @@ class Period(LogicModel):
                 rv.extend(event.show_match_template())
 
         if check_side_change():
-            
-            obj = SideChange()
-            obj.happen(self.event_id, self.id, ":".join(score), data[1])
-            obj.save()
 
             self.pause()
+
+            side_change_ = SideChange()
+            side_change_.save()
+
+            side_change_.happen(self.event_id, self.id, f"{score[0]}:{score[1]}", data[1])
+            side_change_.save()
+
             rv.extend(event.show_match_template())
 
         if check_technical_time_out():
-            
-            obj = TimeOut()
-            obj.happen(self.event_id, self.period_id, -1, ":".join(score))
-            obj.save()
 
             self.pause()
+
+            tto_ = TimeOut()
+            tto_.is_technical = 1
+            tto_.save()
+
+            tto_.happen(self.event_id, self.id, -1, f"{score[0]}:{score[1]}")
+
             rv.extend(event.show_paused_match_template())
 
         if check_time_out():
 
-            obj = TimeOut(self.event_id, self.period_id, self.left_team_id if data[1] == "0" else self.right_team_id, ":".join(score))
-            obj.happen()
-            obj.save()
-
             self.pause()
+
+            to_ = TimeOut()
+            to_.save()
+
+            to_.happen(self.event_id, self.id, self.left_team_id if data[1] == "0" else self.right_team_id, f"{score[0]}:{score[1]}")
+            to_.save()
+            
             rv.extend(event.show_paused_match_template())
 
         if check_action():
 
-            obj = Action()
-            obj.happen(self.event_id, self.id, data[1], ":".join(score))
-            obj.save()
+            action_ = Action()
+            action_.save()
+
+            action_.happen(self.event_id, self.id, self.left_team_id if data[1] == "0" else self.right_team_id, int(data[2]), f"{score[0]}:{score[1]}")
+            action_.save()
 
             rv.extend(event.show_match_template())
 
@@ -1003,54 +1083,54 @@ class RulesSet(LogicModel):
     
     name = models.CharField(max_length=5096, default="")
 
-    win_event_by = models.IntegerField(default=0) #
-    win_period_by = models.CharField(max_length=5096, default=';') #
+    win_event_by = models.IntegerField(default=0)
+    win_period_by = models.CharField(max_length=5096, default=';')
 
-    periods_in_event = models.IntegerField(default=2) #
-    periods_to_win_event = models.IntegerField(default=2) #
+    periods_in_event = models.IntegerField(default=2)
+    periods_to_win_event = models.IntegerField(default=2)
 
-    points_in_period = models.IntegerField(default=2) #
-    points_to_win_period = models.CharField(max_length=5096, default=';') #
+    points_in_period = models.IntegerField(default=2)
+    points_to_win_period = models.CharField(max_length=5096, default=';')
 
-    stop_event_after_enough_periods = models.BooleanField(default=False) #
-    stop_period_after_enough_points = models.BooleanField(default=False) #
+    stop_event_after_enough_periods = models.BooleanField(default=False)
+    stop_period_after_enough_points = models.CharField(max_length=5096, default=';')
 
-    min_difference_periods_to_win_event = models.IntegerField(default=0) #
-    min_difference_points_to_win_period = models.CharField(max_length=5096, default=';') #
+    min_difference_periods_to_win_event = models.IntegerField(default=0)
+    min_difference_points_to_win_period = models.CharField(max_length=5096, default=';')
 
-    points_per_score_per_period = models.CharField(max_length=5096, default=';') #
-    scores_names = models.CharField(max_length=5096, default=';') #######
+    points_per_score_per_period = models.CharField(max_length=5096, default=';')
+    scores_names = models.CharField(max_length=5096, default=';')
 
-    event_length_minutes = models.IntegerField(default=0) # 
-    periods_lenght_minutes = models.CharField(max_length=5096, default=';') #
+    event_length_minutes = models.IntegerField(default=0)
+    periods_lenght_minutes = models.CharField(max_length=5096, default=';')
 
-    interval_between_periods_munutes = models.CharField(max_length=5096, default=';')
+    interval_between_periods_munutes = models.CharField(max_length=5096, default=';') #######
 
     event_timer_direction = models.IntegerField(default=0) #######
     period_timers_directions = models.CharField(max_length=5096, default=';') #######
 
-    timers_stop_at_pauses = models.IntegerField(default=0) #
+    timers_stop_at_pauses = models.IntegerField(default=0)
 
-    side_changes_after_periods = models.CharField(max_length=5096, default=';') #
-    side_changes_during_periods = models.CharField(max_length=5096, default=';') # 
-    side_changes_during_periods_scores = models.CharField(max_length=5096, default=';') #
-    
-    coin_tosses_before_periods = models.CharField(max_length=5096, default=';') #
-    coin_toss_start_before_minutes  = models.CharField(max_length=5096, default=';') #
+    side_changes_after_periods = models.CharField(max_length=5096, default=';')
+    side_changes_during_periods = models.CharField(max_length=5096, default=';')
+    side_changes_during_periods_scores = models.CharField(max_length=5096, default=';')
 
-    time_outs_per_team_per_period = models.CharField(max_length=5096, default=';') #
-    time_outs_lenghts_per_team_per_period = models.CharField(max_length=5096, default=';') #
+    coin_tosses_before_periods = models.CharField(max_length=5096, default=';')
+    coin_toss_start_before_minutes  = models.CharField(max_length=5096, default=';')
+
+    time_outs_per_team_per_period = models.CharField(max_length=5096, default=';')
+    time_outs_lenghts_per_team_per_period = models.CharField(max_length=5096, default=';')
     
-    technical_time_outs_lenghts_per_period = models.CharField(max_length=5096, default=';') #
-    technical_time_outs_at_score_per_period = models.CharField(max_length=5096, default=';') #
+    technical_time_outs_lenghts_per_period = models.CharField(max_length=5096, default=';')
+    technical_time_outs_at_score_per_period = models.CharField(max_length=5096, default=';')
     
-    actions_list = models.CharField(max_length=5096, default=';') #######
+    actions_list = models.CharField(max_length=5096, default=';')
     
-    event_start_remainder_minutes_before = models.CharField(max_length=5096, default=';') #
-    event_end_remainder_minutes_before = models.CharField(max_length=5096, default=';') #
-    period_start_remainder_minutes_before = models.CharField(max_length=5096, default=';') #
-    period_end_remainder_minutes_before = models.CharField(max_length=5096, default=';') #
-    coin_toss_remainder_minutes_before = models.CharField(max_length=5096, default=';') #
+    event_start_remainder_minutes_before = models.CharField(max_length=5096, default=';')
+    event_end_remainder_minutes_before = models.CharField(max_length=5096, default=';')
+    period_start_remainder_minutes_before = models.CharField(max_length=5096, default=';')
+    period_end_remainder_minutes_before = models.CharField(max_length=5096, default=';')
+    coin_toss_remainder_minutes_before = models.CharField(max_length=5096, default=';')
     
     def register(self):
         pass
@@ -1069,19 +1149,17 @@ class Action(LogicModel):
 
     at_score = models.CharField(max_length=5096, default="")
 
-    def happen(self, event_id, period_id, team_id, at_score):
+    def happen(self, event_id, period_id, team_id, type_id, at_score):
         
         self.event_id = event_id
         self.period_id = period_id
         self.team_id = team_id
+        self.type_id = type_id
         self.at_score = at_score
-        self.save()
-
-        period = Period._get_(self.period_id)[0]
-
         self.epoch_time = str(time.time())
         self.save()
 
+        period = Period._get_({"id": self.period_id})[0]
         period.actions_ids = period.actions_ids + str(self.id) + ";"
         period.save()
 
@@ -1090,7 +1168,7 @@ class Action(LogicModel):
         self.status = 0
         self.save()
         
-        period = Period._get_(self.period_id)[0]
+        period = Period._get_({"id": self.period_id})[0]
         period.actions_ids.pop(f";{self.id};")
         period.save()
 
@@ -1141,6 +1219,10 @@ class CoinToss(LogicModel):
         new_period.right_team_id = (event.home_team_id if self.left_team_id == event.away_team_id else event.away_team_id)
         new_period.ball_possesion_team_id = self.ball_possesion_team_id
         
+        new_period.original_left_team_id = self.left_team_id
+        new_period.original_right_team_id = (event.home_team_id if self.left_team_id == event.away_team_id else event.away_team_id)
+        new_period.original_ball_possesion_team_id = self.ball_possesion_team_id
+
         new_period.save()
 
         return new_period.start() 
@@ -1177,7 +1259,7 @@ class Point(LogicModel):
     
     epoch_time = models.CharField(max_length=5096, default="")
 
-    point_type = models.IntegerField(default=-1)
+    type = models.IntegerField(default=-1)
     value = models.IntegerField(default=1)
 
     def happen(self, event_id, period_id, team_id, at_score, type):
@@ -1189,10 +1271,6 @@ class Point(LogicModel):
         self.type = type
         self.epoch_time = str(time.time())
         self.save()
-
-        period = Period._get_({"id":self.period_id})[0]
-        period.points_ids = period.points_ids + str(self.id) + ";"
-        period.save()
 
     def cancel_happen(self):
         pass 
@@ -1216,13 +1294,16 @@ class SideChange(LogicModel):
 
         self.save()
 
-        event = Event._get_({"id": self.event_id})[0]
-        event.side_changes_ids += f"{self.id};"
-        event.save()
+        if self.event_id == -1:
+            event = Event._get_({"id": self.event_id})[0]
+            event.side_changes_ids += f"{self.id};"
+            event.save()
 
-        period = Period._get_(self.period_id)[0]
-        period.left_team_id, period.right_team_id = period.right_team_id, period.left_team_id
-        period.save()
+        else:
+            period = Period._get_({"id": self.period_id})[0]
+            period.left_team_id, period.right_team_id = period.right_team_id, period.left_team_id
+            period.side_changes_ids = period.side_changes_ids + str(self.id) + ";"
+            period.save()
 
         self.left_team_after_id = period.left_team_id
         self.save()
@@ -1248,15 +1329,12 @@ class TimeOut(LogicModel):
         self.period_id = period_id
         self.team_id = team_id
         self.at_score = at_score
-        self.save()
-
-        period = Period._get_(self.period_id)[0]
-        period.is_paused = 1
-        period.time_outs_ids = period.time_outs_ids + str(self.id) + ";"
-        period.save()
-
         self.epoch_time = str(time.time())
         self.save()
+
+        period = Period._get_({"id":self.period_id})[0]
+        period.timeouts_ids = period.timeouts_ids + str(self.id) + ";"
+        period.save()
 
     def cancel_happen(self):
         pass
@@ -1372,17 +1450,37 @@ class BotUser(models.Model):
 
         for event in Event.objects.all():
 
-            if event.admin_id == self.id:
+            if event.admin_id == self.id: # TODO change to inline if-then (look Event.show_layout)
                 
-                home_team_name = Team._get_({"id": event.home_team_id})[0].name
-                away_team_name = Team._get_({"id": event.away_team_id})[0].name
+                try:
+                    home_team_name = Team._get_({"id": event.home_team_id})[0].name
+                except:
+                    home_team_name = ""
 
-                competition_name = Competition.objects.get(pk=event.competition_id).name
+                try:
+                    away_team_name = Team._get_({"id": event.away_team_id})[0].name
+                except:
+                    away_team_name = ""
 
-                rules_set_name = RulesSet.objects.get(pk=event.rules_set_id).name
+                try:
+                    competition_name = Competition._get_({"id": event.competition_id}).name
+                except:
+                    competition_name = ""
 
-                date = event.date_scheduled
-                time_ = event.time_scheduled
+                try:
+                    rules_set_name = RulesSet.objects.get(pk=event.rules_set_id).name
+                except: 
+                    rules_set_name = ""
+
+                try:
+                    date = event.date_scheduled
+                except:
+                    date = ""
+
+                try:
+                    time_ = event.time_scheduled
+                except:
+                    time_ = ""
 
                 if event.active_status == 1:
                     rv.append(self.show_screen_to("43", [[event.id, status_strings[event.status][self.language_id], home_team_name, away_team_name, competition_name, rules_set_name, date, time_]], [[event.id, event.id],]))

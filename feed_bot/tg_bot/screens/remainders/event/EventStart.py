@@ -17,7 +17,7 @@ class EventStart(Remainder):
 
     def button_0(self, params, user_id, scheduled_message_id):
 
-        period_id = Utils.api("get_or_make",
+        period_id = Utils.api("get",
         model="Period",
         params={"event_id": int(params[0]), "status": 0},
         fields=["id"],)[0][0]
@@ -25,5 +25,5 @@ class EventStart(Remainder):
         return Utils.api("execute_method",
         model="Period",
         params={"id": period_id},
-        method={"name": "start", "params": []}
+        method={"name": "run", "params": []}
         )[0]
