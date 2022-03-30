@@ -72,7 +72,7 @@ class EventPanelActive(Screen):
                 return Utils.api("execute_method",
                 model="Period",
                 params={"id": last_period_id},
-                method={"name": "run", "params": []}
+                method={"name": "run", "params": ["show_"]}
                 )[0]
 
         elif event_status == 3: #between periods
@@ -106,7 +106,7 @@ class EventPanelActive(Screen):
                 return Utils.api("execute_method",
                 model="Period",
                 params={"id": last_period_id},
-                method={"name": "run", "params": []}
+                method={"name": "run", "params": ["show_"]}
                 )[0]
 
         elif event_status == 2: #in progress
@@ -127,7 +127,7 @@ class EventPanelActive(Screen):
                 return Utils.api("execute_method",
                 model="Event",
                 params={"id": event_id},
-                method={"name": "show_paused_match_template", "params": []}
+                method={"name": "show_paused_match_template", "params": [last_period_id, ]}
                 )[0]
             
             else:
@@ -135,13 +135,13 @@ class EventPanelActive(Screen):
                 return Utils.api("execute_method",
                 model="Event",
                 params={"id": event_id},
-                method={"name": "show_match_template", "params": []}
+                method={"name": "show_match_template", "params": [last_period_id, ]}
                 )[0]
 
-        elif event_status == 4: #finished #TODO check
+        elif event_status == 4: #finished
             
             return Utils.api("execute_method",
             model="Event",
             params={"id": event_id},
-            method={"name": "show_paused_match_template", "params": []}
+            method={"name": "show_paused_match_template", "params": [last_period_id, ]}
             )[0]

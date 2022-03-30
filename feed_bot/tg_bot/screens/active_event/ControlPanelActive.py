@@ -71,12 +71,13 @@ class ControlPanelActive(Screen):
             for time_out_id in timeouts_ids.split(";"):
                 
                 if time_out_id:
-                    team_id = Utils.api("get",
+                    team_id, is_technical = Utils.api("get",
                     model="TimeOut",
                     params={"id": int(time_out_id)},
-                    fields=["team_id"]
-                    )[0][0]
-                    time_outs_count[team_id != left_team_id] += 1
+                    fields=["team_id", "is_technical"]
+                    )[0]
+
+                    if is_technical == 0: time_outs_count[team_id != left_team_id] += 1
         
             for team in range(2):
                 if time_outs_count[team] < int(time_outs_per_team_per_period.split(";")[period_count - 1].split(",")[team]):

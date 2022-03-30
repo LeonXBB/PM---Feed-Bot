@@ -26,5 +26,5 @@ class PeriodScheduled(Remainder):
         return Utils.api("execute_method",
         model="Period",
         params={"id": int(params[0])},
-        method={"name": "run", "params": []}
+        method={"name": "run", "params": ["show_"]}
         )[0]
