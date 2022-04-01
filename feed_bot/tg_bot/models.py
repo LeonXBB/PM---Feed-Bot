@@ -6,10 +6,12 @@ import hashlib
 import time
 import datetime
 
+from .bin.utils import Utils
+
 from .screens.Screen import Screen
 from .screens.remainders.Remainder import Remainder
 
-# Create your models here.
+from .screens._utils.checks import check_time_outs
 
 #LOGIC #TODO sepatate by different files
 
@@ -31,7 +33,7 @@ class LogicModel(models.Model):
 
         return rv
 
-    created = models.CharField(max_length=5096, default=";") # user_id, timestamp
+    created = models.CharField(max_length=5096, default=f"{{}}") # "by": user_id, "at": timestamp
     status = models.IntegerField(default=0)
 
     class Meta:
@@ -93,8 +95,27 @@ class Event(LogicModel):  #TODO move template to different class?
         else:
             return BotUser._get_({"id": self.admin_id})[0].show_screen_to("21", [formatters,])
 
-    def edit_template(self): #TODO DO and JSON
-        pass
+    def update_template(self, attr, val): #TODO JSON
+        
+        new_edit = EventTemplateEdit()
+
+        new_edit.event_id = self.id
+        new_edit.field_name = attr
+        new_edit.old_value = getattr(self, attr)
+        new_edit.new_value = val
+
+        created = eval(new_edit.created)
+        created["at"] = str(int(time.time()))
+        created["by"] = self.admin_id
+        new_edit.created = dict(created)
+        
+        new_edit.save()
+
+        setattr(self, attr, val) #TODO change so we don't actually save the values unless the user confirms the event, the show_template func should take its formatters values from the latest edits
+        self.save()
+
+        Utils.api("new_event_template_value_update", "logic",
+        event_id=self.id, attr=attr, val=val)
 
     def cancel_edit_template(self): #TODO DO and JSON
         pass
@@ -127,9 +148,6 @@ class Event(LogicModel):  #TODO move template to different class?
         # (opt) action 1 - action 2
         # (* continue for all actions *)
 
-        def check_for_timeouts():
-            return max(list( int(time_out_per_team) for time_out_per_team in (rules_set.time_outs_per_team_per_period.split(";")[period_count - 1]).split(',') )) > 0
-
         admin = BotUser._get_({"id": self.admin_id})[0]
         rules_set = RulesSet._get_({"id": self.rules_set_id})[0]
 
@@ -147,13 +165,12 @@ class Event(LogicModel):  #TODO move template to different class?
         time_outs_all = []
         actions_all = []
         
-        for action_type in rules_set.actions_list.split(";"):
+        for action_type in eval(rules_set.actions_list):
             if action_type:
                 actions_all.append(list())
 
-        for point_type in rules_set.scores_names.split(";"):
-            if point_type:
-                points_by_type_by_period.append(list())
+        for point_type in eval(rules_set.scores_names):
+            points_by_type_by_period.append(list())
 
         for period_id in self.periods_ids.split(";"):
             if period_id:
@@ -166,9 +183,8 @@ class Event(LogicModel):  #TODO move template to different class?
 
                 sum_points_by_period.append([0, 0])
 
-                for i, point_type in enumerate(rules_set.scores_names.split(";")):
-                    if point_type:
-                        points_by_type_by_period[i].append([0, 0])
+                for i, point_type in enumerate(eval(rules_set.scores_names)):
+                    points_by_type_by_period[i].append([0, 0])
 
                     for point_id in period.points_ids.split(";"):
                         if point_id:
@@ -218,21 +234,20 @@ class Event(LogicModel):  #TODO move template to different class?
         scores += f"{sum_points_by_period[-1][0]} - {sum_points_by_period[-1][1]}"
         scores += f"\n({periods_score[0]} - {periods_score[1]})\n"
 
-        for i, point_type in enumerate(rules_set.scores_names.split(";")):
-            if point_type:
+        for i, point_type in enumerate(eval(rules_set.scores_names)):
                 
-                sum_0 = sum_1 = 0
-                for period_ in points_by_type_by_period[i]:
-                    sum_0 += period_[0]
-                    sum_1 += period_[1]
+            sum_0 = sum_1 = 0
+            for period_ in points_by_type_by_period[i]:
+                sum_0 += period_[0]
+                sum_1 += period_[1]
 
-                try:
-                    scores += f"\n   {point_type}: {points_by_type_by_period[i][-1][0]} - {points_by_type_by_period[i][-1][1]} ({sum_0} - {sum_1})"
-                except: #for when we didnt have any points of this type (e.g. when we have only one period) #TODO: find a better way to do this
+            try:
+                scores += f"\n   {point_type}: {points_by_type_by_period[i][-1][0]} - {points_by_type_by_period[i][-1][1]} ({sum_0} - {sum_1})"
+            except: #for when we didnt have any points of this type (e.g. when we have only one period) #TODO: find a better way to do this
                     pass 
 
         time_out_string = "\n"
-        if check_for_timeouts():
+        if check_time_outs(0, self.id) != 0 or check_time_outs(1, self.id) != 0:
             time_out_word = getattr(TextString._get_({"screen_id": "active", "position_index": 1})[0], f"language_{admin.language_id + 1}")
             
             try: # if we have time outs #TODO find a better way to do this (check lenght)
@@ -263,7 +278,7 @@ class Event(LogicModel):  #TODO move template to different class?
 
         bottom_string = f"{time_out_string}\n"
 
-        for i, action in enumerate(rules_set.actions_list.split(";")):
+        for i, action in enumerate(eval(rules_set.actions_list)):
             if action:
                 try: # if we have actions #TODO find a better way to do this (check lenght)
                     action_1 = actions_all[i][-1][0]
@@ -311,9 +326,6 @@ class Event(LogicModel):  #TODO move template to different class?
 
     def show_paused_match_template(self, period_id):
         
-        def check_for_timeouts():
-            return max(list( int(time_out_per_team) for time_out_per_team in (rules_set.time_outs_per_team_per_period.split(";")[period_count - 1]).split(',') )) > 0
-
         admin = BotUser._get_({"id": self.admin_id})[0]
         rules_set = RulesSet._get_({"id": self.rules_set_id})[0]
 
@@ -331,13 +343,11 @@ class Event(LogicModel):  #TODO move template to different class?
         time_outs_all = []
         actions_all = []
         
-        for action_type in rules_set.actions_list.split(";"):
-            if action_type:
-                actions_all.append(list())
+        for action_type in eval(rules_set.actions_list):
+            actions_all.append(list())
 
-        for point_type in rules_set.scores_names.split(";"):
-            if point_type:
-                points_by_type_by_period.append(list())
+        for point_type in eval(rules_set.scores_names):
+            points_by_type_by_period.append(list())
 
         for period_id in self.periods_ids.split(";"):
             if period_id:
@@ -350,9 +360,8 @@ class Event(LogicModel):  #TODO move template to different class?
 
                 sum_points_by_period.append([0, 0])
 
-                for i, point_type in enumerate(rules_set.scores_names.split(";")):
-                    if point_type:
-                        points_by_type_by_period[i].append([0, 0])
+                for i, point_type in enumerate(eval(rules_set.scores_names)):
+                    points_by_type_by_period[i].append([0, 0])
 
                     for point_id in period.points_ids.split(";"):
                         if point_id:
@@ -402,21 +411,20 @@ class Event(LogicModel):  #TODO move template to different class?
         scores += f"{sum_points_by_period[-1][0]} - {sum_points_by_period[-1][1]}"
         scores += f"\n({periods_score[0]} - {periods_score[1]})\n"
 
-        for i, point_type in enumerate(rules_set.scores_names.split(";")):
-            if point_type:
+        for i, point_type in enumerate(eval(rules_set.scores_names)):
                 
-                sum_0 = sum_1 = 0
-                for period_ in points_by_type_by_period[i]:
-                    sum_0 += period_[0]
-                    sum_1 += period_[1]
+            sum_0 = sum_1 = 0
+            for period_ in points_by_type_by_period[i]:
+                sum_0 += period_[0]
+                sum_1 += period_[1]
 
-                try:
-                    scores += f"\n   {point_type}: {points_by_type_by_period[i][-1][0]} - {points_by_type_by_period[i][-1][1]} ({sum_0} - {sum_1})"
-                except: #for when we didnt have any points of this type (e.g. when we have only one period) #TODO: find a better way to do this
-                    pass 
+            try:
+                scores += f"\n   {point_type}: {points_by_type_by_period[i][-1][0]} - {points_by_type_by_period[i][-1][1]} ({sum_0} - {sum_1})"
+            except: #for when we didnt have any points of this type (e.g. when we have only one period) #TODO: find a better way to do this
+                pass 
 
         time_out_string = "\n"
-        if check_for_timeouts():
+        if check_time_outs(0, self.id) != 0 or check_time_outs(1, self.id) != 0:
             time_out_word = getattr(TextString._get_({"screen_id": "active", "position_index": 1})[0], f"language_{admin.language_id + 1}")
             
             try: # if we have time outs #TODO find a better way to do this (check lenght)
@@ -447,7 +455,7 @@ class Event(LogicModel):  #TODO move template to different class?
 
         bottom_string = f"{time_out_string}\n"
 
-        for i, action in enumerate(rules_set.actions_list.split(";")):
+        for i, action in enumerate(eval(rules_set.actions_list)):
             if action:
                 try: # if we have actions #TODO find a better way to do this (check lenght)
                     action_1 = actions_all[i][-1][0]
@@ -585,11 +593,11 @@ class Event(LogicModel):  #TODO move template to different class?
                 rv.extend(Remainder._get_("EventScheduled").schedule(int(time.time()), self.admin_id, [[self.id, home_team_name, away_team_name] ,], f"event_{self.id}_start", [[self.id, self.id], ]))
 
             #check coin_toss
-            if self.status != 4 and period_count < rules_set.periods_in_event and rules_set.coin_tosses_before_periods.split(";")[period_count] == "1":
+            if self.status != 4 and period_count < rules_set.periods_in_event and eval(rules_set.coin_tosses_before_periods)[period_count - 1] == "1":
                 
                 if not check_sent_already(140, f"event_{self.id}_coin_toss_{period_count}"):
 
-                    when = int(self.start_scheduled_epoch) - int(rules_set.coin_toss_start_before_minutes.split(";")[coin_toss_count - 1]) * 60
+                    when = int(self.start_scheduled_epoch) - int(rules_set.coin_toss_start_before_minutes.split(";")[coin_toss_count]) * 60
                     
                     rv.extend(Remainder._get_("CoinTossHappens").schedule(when, self.admin_id, [[self.id, home_team_name, away_team_name] ,], f"event_{self.id}_coin_toss_{period_count}", [[self.id, self.id], ]))
 
@@ -599,7 +607,7 @@ class Event(LogicModel):  #TODO move template to different class?
             
             # check event start
             
-            if self.status == 1 and not check_sent_already(100, f"event_{self.id}_start") and period_count < rules_set.periods_in_event and not rules_set.coin_tosses_before_periods.split(";")[period_count] == "1":
+            if self.status == 1 and not check_sent_already(100, f"event_{self.id}_start") and period_count < rules_set.periods_in_event and not eval(rules_set.coin_tosses_before_periods)[period_count - 1] == "1":
                     
                 when = int(self.start_scheduled_epoch)
 
@@ -654,7 +662,7 @@ class Event(LogicModel):  #TODO move template to different class?
                 if period_id:
                     period = Period._get_({"id": int(period_id)})[0]
 
-            return self.status == 3 and not rules_set.coin_tosses_before_periods.split(";")[period_count] == "1" and not period.status == 0
+            return self.status == 3 and not eval(rules_set.coin_tosses_before_periods)[period_count - 1] == "1" and not period.status == 0
 
         data = command.split("_")
 
@@ -714,6 +722,16 @@ class Event(LogicModel):  #TODO move template to different class?
             pass
 
         return eval(f"cancel_{task}()")
+
+class EventTemplateEdit(LogicModel): #TODO move template to different class and change all references to it
+
+    event_id = models.IntegerField(default=-1)
+    field_name = models.CharField(max_length=5096)
+    old_value = models.CharField(max_length=5096)
+    new_value = models.CharField(max_length=5096)
+
+    def undo(seld):
+        pass
 
 class Period(LogicModel):
 
@@ -1152,7 +1170,7 @@ class RulesSet(LogicModel):
     min_difference_points_to_win_period = models.CharField(max_length=5096, default=';')
 
     points_per_score_per_period = models.CharField(max_length=5096, default=';')
-    scores_names = models.CharField(max_length=5096, default=';')
+    scores_names = models.CharField(max_length=5096, default='()')
 
     event_length_minutes = models.IntegerField(default=0)
     periods_lenght_minutes = models.CharField(max_length=5096, default=';')
@@ -1168,16 +1186,16 @@ class RulesSet(LogicModel):
     side_changes_during_periods = models.CharField(max_length=5096, default=';')
     side_changes_during_periods_scores = models.CharField(max_length=5096, default=';')
 
-    coin_tosses_before_periods = models.CharField(max_length=5096, default=';')
+    coin_tosses_before_periods = models.CharField(max_length=5096, default='()')
     coin_toss_start_before_minutes  = models.CharField(max_length=5096, default=';')
 
-    time_outs_per_team_per_period = models.CharField(max_length=5096, default=';')
+    time_outs_per_team_per_period = models.CharField(max_length=5096, default='()')
     time_outs_lenghts_per_team_per_period = models.CharField(max_length=5096, default=';')
     
     technical_time_outs_lenghts_per_period = models.CharField(max_length=5096, default=';')
     technical_time_outs_at_score_per_period = models.CharField(max_length=5096, default=';')
     
-    actions_list = models.CharField(max_length=5096, default=';')
+    actions_list = models.CharField(max_length=5096, default='()')
     
     event_start_remainder_minutes_before = models.CharField(max_length=5096, default=';')
     event_end_remainder_minutes_before = models.CharField(max_length=5096, default=';')

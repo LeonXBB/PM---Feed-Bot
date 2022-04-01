@@ -15,25 +15,25 @@ class CompetitionNameEdit(Screen):
         fields=["id", "competition_id"], 
         )[0]
 
-        team_id, events_ids = Utils.api("get_or_make",
+        competition_id, events_ids = Utils.api("get_or_make",
         model="Competition",
-        params={"id": competition_id},
+        params={"id": competition_id, "name": text},
         fields=["id", "events_ids"], 
         by=user_id
         )[0]
 
         Utils.api("update", 
         model="Competition",
-        filter_params={"id": team_id},
+        filter_params={"id": competition_id},
         update_params={"name": text, "events_ids": f"{events_ids}{event_id};"}        
         )
 
-        Utils.api("update", 
+        Utils.api("execute_method",
         model="Event",
-        filter_params={"id": event_id},
-        update_params={"competition_id": team_id}        
+        params={"id": event_id},
+        method={"name": "update_template", "params": ["competition_id", competition_id]},
         )
-
+        
         return Utils.api("execute_method",
         model="Event",
         params={"id": event_id},

@@ -69,10 +69,9 @@ class BotAPI(TemplateView):
                     data["order_by"] = ["id",]
 
                 obj_class = getattr(models, data["model"])
-                query_set = list(obj_class.objects.all().order_by(*data["order_by"]))
-                return obj_class, query_set
+                return obj_class
             
-            obj_class, wrong_rv = init()
+            obj_class = init()
 
             rv = [str(x) for x in list(obj_class._meta.fields)]
 
@@ -130,7 +129,7 @@ class BotAPI(TemplateView):
                     data["params"].pop("id")
 
                 if getattr(obj_class, "created", None) is not None:
-                    obj_instance = obj_class(**data["params"], created=f"{data['by']};{int(time.time())}")
+                    obj_instance = obj_class(**data["params"], created=str({"by": data['by'], "at": int(time.time())}))
                 else:
                     obj_instance = obj_class(**data["params"])
                 

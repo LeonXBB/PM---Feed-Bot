@@ -17,7 +17,7 @@ class HomeTeamNameEdit(Screen):
 
         team_id, events_ids = Utils.api("get_or_make",
         model="Team",
-        params={"id": home_team_id},
+        params={"id": home_team_id, "name": text},
         fields=["id", "events_ids"], 
         by=user_id
         )[0]
@@ -28,10 +28,10 @@ class HomeTeamNameEdit(Screen):
         update_params={"name": text, "events_ids": f"{events_ids}{event_id};"}        
         )
 
-        Utils.api("update", 
+        Utils.api("execute_method",
         model="Event",
-        filter_params={"id": event_id},
-        update_params={"home_team_id": team_id}        
+        params={"id": event_id},
+        method={"name": "update_template", "params": ["home_team_id", team_id]},
         )
 
         return Utils.api("execute_method",

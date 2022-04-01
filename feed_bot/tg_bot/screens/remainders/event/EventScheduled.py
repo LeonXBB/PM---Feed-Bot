@@ -34,7 +34,7 @@ class EventScheduled(Remainder):
             if period_id:
                 period_count += 1
 
-        if coin_tosses_before_periods.split(";")[period_count] == "1":
+        if eval(coin_tosses_before_periods)[period_count] == "1": # not decreasing the period count as period is already inited
             
             return Utils.api("execute_method",
             model="Event",

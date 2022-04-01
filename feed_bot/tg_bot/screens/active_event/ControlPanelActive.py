@@ -1,101 +1,123 @@
-import re
 from decouple import config
 
 from ...bin.utils import Utils
 from ..Screen import Screen
 
+from .._utils.checks import check_time_outs
 
 class ControlPanelActive(Screen):
 
     def get_keyboards(self, data=None):
         
+        def get_ball_string() -> list:
+            return Utils.api("get",
+            model="TextString",
+            params={"screen_id": "active", "position_index": 0},
+            fields=["language_1", "language_2", "language_3", "language_4", "language_5"]
+            )[0]
+    
+        def get_period_data() -> list:
+            return [data[4][0][0], *Utils.api("get",
+            model="Period",
+            params={"id": int(data[4][0][0])},
+            fields=["left_team_id", "right_team_id", "ball_possesion_team_id", "event_id"]
+            )[0]]
+
+        def get_event_data() -> list:
+            return Utils.api("get",
+            model="Event",
+            params={"id": event_id},
+            fields=["rules_set_id",]
+            )[0][0]
+
+        def get_period_count() -> list:
+            return len(Utils.api("get",
+            model="Period",
+            params={"event_id": event_id})) #TODO check for 0th index 
+
+        def get_rules():
+            return Utils.api("get",
+            model="RulesSet",
+            params={"id": rules_set_id},
+            fields=["scores_names", "time_outs_per_team_per_period", "actions_list"]
+            )[0]
+
+        def get_head_row_button(index):
+            
+            team_in_possesion = 0 if ball_possesion_team_id == left_team_id else 2 if ball_possesion_team_id == right_team_id else 1
+
+            return {"text": ball_string if team_in_possesion != index else self.strings[1][2], "data": f"2_{index}_{0 if team_in_possesion != index else 1}" + "_{}"}
+
+        def get_point_buttons():
+            
+            def get_point_button(team_side_index, score_type_index, score_name):
+                return {"text": [score_name, score_name, score_name, score_name, score_name], "data": f"3_{team_side_index}_{score_type_index}" + "_{}"}
+            
+            rv = []
+
+            for i, score_name in enumerate(eval(scores_names)):
+                rv.append(list())
+                for team_side_index in range(2):
+                    rv[-1].append(get_point_button(team_side_index, i, score_name))
+
+            return rv
+        
+        def get_time_out_buttons():
+            
+            rv = []
+
+            def get_time_out_count(team_side_index):
+                return len(Utils.api("get",
+                model="TimeOut",
+                params={"event_id": event_id, "period_id": period_id, "team_id": [left_team_id, right_team_id][team_side_index], "is_technical": 0},
+                fields=["id",]
+                ))
+
+            def get_time_out_button(team_side_index, active):
+                    return {"text": self.strings[1][res + 2], "data": f"4_{team_side_index}_{res}" + "_{}"}
+
+            time_outs_count = [get_time_out_count(i) for i in range(2)]
+                                      
+            for team_side_index in range(2):
+                res = check_time_outs(team_side_index, event_id) # 0 - no time outs in period, 1 - time outs in period, 2 - time outs in period and available
+                if res != 0:    
+                    rv.append(get_time_out_button(team_side_index, res-1))
+
+        def get_action_buttons():
+
+            def get_action_button(team_side_index, action_index, action_name):
+                return {"text": [action_name, action_name, action_name, action_name, action_name], "data": f"5_{team_side_index}_{action_index}" + "_{}"}
+
+            rv = []
+
+            for action_index, action_name in enumerate(eval(actions_list)):
+                rv.append(list())
+                for team_side_index in range(2):
+                    rv[-1].append(get_action_button(team_side_index, action_index, action_name))
+
         if data is None:
             return super().get_keyboards()
 
-        ball_string = Utils.api("get",
-        model="TextString",
-        params={"screen_id": "active", "position_index": 0},
-        fields=["language_1", "language_2", "language_3", "language_4", "language_5"]
-        )[0]
+        ball_string = get_ball_string()
+ 
+        period_id, left_team_id, right_team_id, ball_possesion_team_id, event_id = get_period_data()
+        rules_set_id = get_event_data()
 
-        time_out_string = Utils.api("get",
-        model="TextString",
-        params={"screen_id": "active", "position_index": 1},
-        fields=["language_1", "language_2", "language_3", "language_4", "language_5"]
-        )[0]
+        period_count = get_period_count()
+           
+        scores_names, time_outs_per_team_per_period, actions_list = get_rules()
 
-        period_id = data[4][0][0]
-        left_team_id, right_team_id, ball_possesion_team_id, event_id, timeouts_ids = Utils.api("get",
-        model="Period",
-        params={"id": int(period_id)},
-        fields=["left_team_id", "right_team_id", "ball_possesion_team_id", "event_id", "timeouts_ids"]
-        )[0]
-
-        rules_set_id, periods_ids = Utils.api("get",
-        model="Event",
-        params={"id": event_id},
-        fields=["rules_set_id", "periods_ids"]
-        )[0]
-
-        period_count = 0
-        for period_id in periods_ids.split(";"):
-            if period_id:
-                period_count += 1
-            
-        scores_names, time_outs_per_team_per_period, actions_list = Utils.api("get",
-        model="RulesSet",
-        params={"id": int(rules_set_id)},
-        fields=["scores_names", "time_outs_per_team_per_period", "actions_list"]
-        )[0]
-
-        team_in_possesion = "left" if ball_possesion_team_id == left_team_id else "right" if ball_possesion_team_id == right_team_id else "neutral"
-
-        left_button = {"text": ball_string if team_in_possesion != "left" else self.strings[1][2], "data": f"2_0_{0 if team_in_possesion != 'left' else 1}" + "_{}"}
-        middle_button = {"text": ball_string if team_in_possesion != "neutral" else self.strings[1][2], "data": f"2_1_{0 if team_in_possesion != 'neutral' else 1}" + "_{}"}
-        right_button = {"text": ball_string if team_in_possesion != "right" else self.strings[1][2], "data": f"2_2_{0 if team_in_possesion != 'right' else 1}" + "_{}"}
-
-        header = (left_button, middle_button, right_button)
-        points = []
-        time_outs = []
-        actions = []
-
-        for i, score_name in enumerate(scores_names.split(";")):
-            if score_name:
-                points.append(list())
-                for team in range(2):
-                    points[-1].append({"text": [score_name, score_name, score_name, score_name, score_name], "data": f"3_{team}_{i}" + "_{}"})
-
-        if max(list( int(time_out_per_team) for time_out_per_team in (time_outs_per_team_per_period.split(";")[period_count - 1].split(",")) )) > 0:
-            
-            time_outs_count = [0, 0]
-            for time_out_id in timeouts_ids.split(";"):
-                
-                if time_out_id:
-                    team_id, is_technical = Utils.api("get",
-                    model="TimeOut",
-                    params={"id": int(time_out_id)},
-                    fields=["team_id", "is_technical"]
-                    )[0]
-
-                    if is_technical == 0: time_outs_count[team_id != left_team_id] += 1
-        
-            for team in range(2):
-                if time_outs_count[team] < int(time_outs_per_team_per_period.split(";")[period_count - 1].split(",")[team]):
-                    time_outs.append({"text": self.strings[1][4], "data": f"4_{team}_1" + "_{}"})
-                else:
-                    time_outs.append({"text": self.strings[1][3], "data": f"4_{team}_0" + "_{}"})
-
-        for i, action in enumerate(actions_list.split(";")):
-            actions.append(list())
-            for team in range(2):
-                actions[-1].append({"text": [action, action, action, action, action], "data": f"5_{team}_{i}" + "_{}"})
+        header = [get_head_row_button(i) for i in range(3)]
+        points = [*get_point_buttons()]
+        time_outs = get_time_out_buttons()
+        actions = [*get_action_buttons()]
 
         cancel = {"text": self.strings[1][0], "data": "0_{}"}
         go_back = {"text": self.strings[1][1], "data": "1_{}"}
 
         controls = (cancel, go_back)
 
-        layout = [header, *points, time_outs, *actions, controls]
+        layout = [row for row in [header, *points, time_outs, *actions, controls] if len(row) > 0]
 
         return [layout, ]
 
@@ -159,7 +181,6 @@ class ControlPanelActive(Screen):
             params={"id": int(period_id)},
             method={"name": "run", "params": [f"timeOut_{team}", ]}
             )[0]
-
 
     def button_5(self, params, user_id): # action
         
