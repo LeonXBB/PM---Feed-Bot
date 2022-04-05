@@ -16,7 +16,7 @@ class TechnicalTimeOutStart(Remainder):
     def __init__(self, via) -> None:
         super().__init__(via, "130", "TechnicalTimeOutStart")
 
-    def button_1(self, params, user_id, scheduled_message_id): # skip  
+    def button_1(self, params, user_id, scheduled_message_id): # skip #TODO move to Period.run 
         
         #TODO figure out why two arguments don't work here and in regular time out
 
@@ -32,6 +32,14 @@ class TechnicalTimeOutStart(Remainder):
 
         for period_id_ in periods_ids.split(";"):
             if period_id_: period_id = int(period_id_) 
+
+        time_out_id = Utils.api("get",
+        model="TimeOut",
+        params={"event_id": event_id, "period_id": period_id, "is_technical": 1, "at_score": f"{params[-1]}"}, 
+        fields=["id",]
+        )[0][0]
+
+        Utils.api("technical_time_out_ended", "logic", period_count=params[1], time_out_id=time_out_id, event_id=event_id, period_id=period_id)
 
         return Utils.api("execute_method",
         model="Period",

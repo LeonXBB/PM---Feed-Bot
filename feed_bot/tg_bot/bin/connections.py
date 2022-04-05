@@ -124,7 +124,8 @@ class PollingConnection(Connection):
                         data[k].remove(message_id)
                 self.parent.delete_message(tg_id, int(message_id))
             except Exception as e:
-                print(e)
+                pass
+                #print(e)
 
         Utils.api("update", 
         model="BotUser",

@@ -24,12 +24,11 @@ class MainMenu(Screen):
            
     def button_0(self, params, user_id): # new event
         
-        event_id = Utils.api("get_or_make",
+        event_id = Utils.api("execute_method",
         model="Event",
-        params={"admin_id": user_id, "status": 0},
-        fields=["id"],
-        by=user_id 
-        )[0][0]
+        params="classmethod",
+        method={"name": "make_template", "params": [user_id,]},
+        )[0]
 
         rv = Utils.api("execute_method",
         model="Event",

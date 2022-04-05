@@ -33,7 +33,8 @@ class ControlPanelActive(Screen):
         def get_period_count() -> list:
             return len(Utils.api("get",
             model="Period",
-            params={"event_id": event_id})) #TODO check for 0th index 
+            params={"event_id": event_id},
+            fields=["id",])) #TODO check for 0th index 
 
         def get_rules():
             return Utils.api("get",
@@ -74,7 +75,7 @@ class ControlPanelActive(Screen):
                 ))
 
             def get_time_out_button(team_side_index, active):
-                    return {"text": self.strings[1][res + 2], "data": f"4_{team_side_index}_{res}" + "_{}"}
+                return {"text": self.strings[1][active + 3], "data": f"4_{team_side_index}_{active}" + "_{}"}
 
             time_outs_count = [get_time_out_count(i) for i in range(2)]
                                       
@@ -82,6 +83,8 @@ class ControlPanelActive(Screen):
                 res = check_time_outs(team_side_index, event_id) # 0 - no time outs in period, 1 - time outs in period, 2 - time outs in period and available
                 if res != 0:    
                     rv.append(get_time_out_button(team_side_index, res-1))
+
+            return rv
 
         def get_action_buttons():
 
@@ -94,6 +97,8 @@ class ControlPanelActive(Screen):
                 rv.append(list())
                 for team_side_index in range(2):
                     rv[-1].append(get_action_button(team_side_index, action_index, action_name))
+
+            return rv
 
         if data is None:
             return super().get_keyboards()
@@ -108,16 +113,16 @@ class ControlPanelActive(Screen):
         scores_names, time_outs_per_team_per_period, actions_list = get_rules()
 
         header = [get_head_row_button(i) for i in range(3)]
-        points = [*get_point_buttons()]
+        if (res:= get_point_buttons()) is not None: points = [*res]
         time_outs = get_time_out_buttons()
-        actions = [*get_action_buttons()]
+        if (res:= get_action_buttons()) is not None: actions = [*res]
 
         cancel = {"text": self.strings[1][0], "data": "0_{}"}
         go_back = {"text": self.strings[1][1], "data": "1_{}"}
 
         controls = (cancel, go_back)
 
-        layout = [row for row in [header, *points, time_outs, *actions, controls] if len(row) > 0]
+        layout = [row for row in [header, *points, time_outs, *actions, controls] if row is not None and len(row) > 0]
 
         return [layout, ]
 

@@ -22,7 +22,7 @@ class Utils:
                 done = True
             except Exception as e: #TODO change to the specific type of an exception
                 #print(f"Exception {e} occured while making request to api, trying again...")
-                time.sleep(float(config("request_sleep_period"))) #TODO change to logger
+                #time.sleep(float(config("server_request_sleep_period"))) #TODO change to logger
                 done = True #TODO remove (see above)
         
         return rv
