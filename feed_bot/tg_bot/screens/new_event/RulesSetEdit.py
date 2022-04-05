@@ -33,10 +33,10 @@ class RulesSetEdit(Screen):
         fields=["id",], 
         )[0][0]
 
-        Utils.api("update", 
+        Utils.api("execute_method",
         model="Event",
-        filter_params={"id": event_id},
-        update_params={"rules_set_id": int(params[0])}        
+        params={"id": event_id},
+        method={"name": "update_template", "params": ["rules_set_id", int(params[0])]},
         )
 
         return Utils.api("execute_method",

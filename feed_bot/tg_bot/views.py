@@ -8,10 +8,10 @@ from django.utils.decorators import method_decorator
 from django.views.decorators.csrf import csrf_exempt
 
 import time
+import datetime
 
 from .bin.utils import Utils
 from . import models
-from .screens.Screen import Screen
 
 # Create your views here.
 
@@ -69,10 +69,9 @@ class BotAPI(TemplateView):
                     data["order_by"] = ["id",]
 
                 obj_class = getattr(models, data["model"])
-                query_set = list(obj_class.objects.all().order_by(*data["order_by"]))
-                return obj_class, query_set
+                return obj_class
             
-            obj_class, wrong_rv = init()
+            obj_class = init()
 
             rv = [str(x) for x in list(obj_class._meta.fields)]
 
@@ -130,7 +129,7 @@ class BotAPI(TemplateView):
                     data["params"].pop("id")
 
                 if getattr(obj_class, "created", None) is not None:
-                    obj_instance = obj_class(**data["params"], created=f"{data['by']};{int(time.time())}")
+                    obj_instance = obj_class(**data["params"], created=str({"by": data['by'], "at": int(time.time())}))
                 else:
                     obj_instance = obj_class(**data["params"])
                 
@@ -251,7 +250,12 @@ class BotAPI(TemplateView):
                 return rv
 
             obj_class, query_set = init()
-            query_set = filter_set()
+            
+            if data["params"] != "classmethod": 
+                query_set = filter_set()
+            else:
+                query_set = [obj_class, ]
+            
             rv = run_set()
 
             return JsonResponse(rv, safe=False)
@@ -266,9 +270,210 @@ class BotAPI(TemplateView):
 class BotLogicAPI(TemplateView): # TODO
 
     def post(self, request):
-        
+
+        from .models.logic.event.Event import Event
+
+        from .models.logic.Team import Team
+        from .models.logic.TimeOut import TimeOut
+        from .models.logic.RulesSet import RulesSet
+        from .models.logic.CoinToss import CoinToss
+        from .models.logic.Period import Period
+
         data = eval(request.body.decode("utf8"))
 
-        print(f"DATA //// /// // /{data}")
-       
+        task = data["task"]
+
+        if task == "event_template_created":
+            print(f"Подія {data['id']} створена")
+
+        elif task == "event_template_updated":
+            
+            def get_verbose_vals():
+
+                old_val = data["old_val"]
+                new_val = data["new_val"]
+                                
+                if data["attr"] == "home_team":
+                    try: #TODO change to check if team exists
+                        old_val = getattr(models, "Team")._get_({"id": data["old_val"]})[0].name
+                    except:
+                        old_val = ""
+                    
+                    new_val = getattr(models, "Team")._get_({"id": data["new_val"]})[0].name
+                
+                elif data["attr"] == "away_team":
+                    try: #TODO change to check if team exists
+                        old_val = getattr(models, "Team")._get_({"id": data["old_val"]})[0].name
+                    except:
+                        old_val = ""
+
+                    new_val = getattr(models, "Team")._get_({"id": data["new_val"]})[0].name
+                
+                elif data["attr"] == "competition":                
+                    
+                    try: #TODO change to check if competition exists
+                        old_val = getattr(models, "Competition")._get_({"id": data["old_val"]})[0].name
+                    except:
+                        old_val = ""
+                    
+                    new_val = getattr(models, "Competition")._get_({"id": data["new_val"]})[0].name
+                
+                elif data["attr"] == "rules_set":
+                    
+                    try: #TODO change to check if rules_set exists
+                        old_val = getattr(models, "RulesSet")._get_({"id": data["old_val"]})[0].name
+                    except:
+                        old_val = ""
+
+                    new_val = getattr(models, "RulesSet")._get_({"id": data["new_val"]})[0].name
+
+                return old_val, new_val
+
+            old_val, new_val = get_verbose_vals()
+
+            print(f"Подія {data['id']} оновлена, параметр {data['attr']} змінено з {old_val} на {new_val}")
+
+        elif task == "event_scheduled":
+
+            datetime_string = datetime.datetime.fromtimestamp(data["event_epoch"], None)
+
+            print(f"Подія {data['event_id']} запланована на {datetime_string}")
+
+        elif task == "event_started":
+            
+            print(f"Подія {data['event_id']} почалася")
+
+        elif task == "event_ended":
+            print(f"Подія {data['event_id']} завершена")
+
+        elif task == "event_cancelled":
+            print(f"Подія {data['event_id']} скасована")
+
+        elif task == "period_scheduled":
+            
+            datetime_string = datetime.datetime.fromtimestamp(data["period_epoch"], None)
+
+            print(f"Період {data['period_count']} ({data['period_id']}) події {data['event_id']} запланований на {datetime_string}")
+        
+        elif task == "period_started":
+            print(f"Період {data['period_count']} ({data['period_id']}) події {data['event_id']} почався")
+
+        elif task == "period_ended":
+            print(f"Період {data['period_count']} ({data['period_id']}) події {data['event_id']} завершено")
+
+        elif task == "action_happened":
+
+            team_name = Team._get_({"id": data["team_id"]})[0].name
+            event = Event._get_({"id": data["event_id"]})[0]
+            action_name = eval(RulesSet._get_({"id": event.rules_set_id})[0].actions_list)[data["action_type"]]
+
+            print(f"Дія {action_name} ({data['action_id']}) команди {team_name}, період {data['period_count']} ({data['period_id']}) події {data['event_id']}")
+
+        elif task == "action_cancelled":
+            pass
+
+        elif task == "coin_toss_scheduled":
+
+            datetime_string = datetime.datetime.fromtimestamp(data["coin_toss_epoch"], None)
+
+            print(f"Жеребкування # {data['coin_toss_count'] + 1} перед періодом {data['period_count'] + 1} події {data['event_id']} заплановано на {datetime_string}")
+
+        elif task == "coin_toss_started":
+            
+            print(f"Жеребкування # {data['coin_toss_count'] + 1} ({data['coin_toss_id']}) перед періодом {data['period_count'] + 1} події {data['event_id']} почалося")
+        
+        elif task == "coin_toss_edited":
+
+            attr = "Команда зліва" if data["attr"] == "left_team_id" else "Команда, що починає"
+            val = data["val"]
+
+            try:
+                val = Team._get_({"id": data["val"]})[0].name
+            except:
+                val = ""
+
+            print(f"Жеребкування # {data['coin_toss_count']} ({data['coin_toss_id']}) перед періодом {data['period_count'] + 1} події {data['event_id']}: нове значення параметру {attr}: {val}")
+
+        elif task == "coin_toss_saved":
+            
+            left_team_name = Team._get_({"id": data["left_team_id"]})[0].name
+            ball_possession_team_name = Team._get_({"id": data["ball_possession_team_id"]})[0].name
+
+            print(f"Жеребкування # {data['coin_toss_count']} ({data['coin_toss_id']}) перед періодом {data['period_count']} ({data['period_id']}) події {data['event_id']} підтверджено. Команда зліва: {left_team_name}. Команда, що починає: {ball_possession_team_name}.")
+
+        elif task == "coin_toss_start_cancelled":
+            pass
+
+        elif task == "coin_toss_edit_cancelled":
+            pass
+
+        elif task == "coin_toss_save_cancelled":
+            pass
+
+        elif task == "point_happened":
+
+            event = Event._get_({"id": data["event_id"]})[0]
+            team_name = Team._get_({"id": data["team_id"]})[0].name
+            point_type_name = eval(RulesSet._get_({"id": event.rules_set_id})[0].scores_names)[data["point_type"]]
+
+            print(f"Зміна рахунку команди {team_name}, період {data['period_count']} ({data['period_id']}) події {data['event_id']}. Тип: {point_type_name}, значення: {data['point_value']}, нове значення рахунку: {data['team_score']}")
+
+        elif task == "point_cancelled":
+            pass
+
+        elif task == "side_change_after_period_happened":
+            print(f"Зміна сторін ({data['side_change_id']}) піcля періоду {data['period_count']} ({data['period_id']}) події {data['event_id']}")
+
+        elif task == "side_change_after_period_cancelled":
+            pass
+
+        elif task == "side_change_during_period_happened":
+            print(f"Зміна сторін ({data['side_change_id']}) під час періоду {data['period_count']} ({data['period_id']}) події {data['event_id']}")
+
+        elif task == "side_change_during_period_cancelled":
+            pass
+
+        elif task == "technical_time_out_started":
+            
+            technical_time_out_count = len(TimeOut._get_({"event_id": data["event_id"], "period_id": data["period_id"], "is_technical": 1}))
+
+            print(f"Почався {technical_time_out_count}-й технічний тайм-аут ({data['time_out_id']}) в періоду {data['period_count']} ({data['period_id']}) події {data['event_id']}")
+
+        elif task == "technical_time_out_ended":
+            
+            technical_time_out_count = len(TimeOut._get_({"event_id": data["event_id"], "period_id": data["period_id"], "is_technical": 1}))
+
+            print(f"Закінчився {technical_time_out_count}-й технічний тайм-аут ({data['time_out_id']}) в періоду {data['period_count']} ({data['period_id']}) події {data['event_id']}")
+
+        elif task == "technical_time_out_cancelled":
+            pass
+
+        elif task == "time_out_started":
+
+            time_out_count = len(TimeOut._get_({"event_id": data["event_id"], "period_id": data["period_id"], "team_id": data["team_id"]}))
+            team_name = Team._get_({"id": data["team_id"]})[0].name
+
+            print(f"Почався {time_out_count}-й тайм-аут ({data['time_out_id']}) команди {team_name} ({data['team_id']}) в періоду {data['period_count']} ({data['period_id']}) події {data['event_id']}")
+
+        elif task == "time_out_ended":
+            
+            time_out_count = len(TimeOut._get_({"event_id": data["event_id"], "period_id": data["period_id"], "team_id": data["team_id"]}))
+            team_name = Team._get_({"id": data["team_id"]})[0].name
+
+            period_count = len(Period._get_({"id": data["period_id"]}))
+
+            print(f"Закінчився {time_out_count}-й тайм-аут ({data['time_out_id']}) команди {team_name} ({data['team_id']}) в періоду {period_count} ({data['period_id']}) події {data['event_id']}")
+
+        elif task == "time_out_cancelled":
+            pass
+
+        elif task == "period_paused":
+            print(f"Подія {data['event_id']}, період {data['period_count']} ({data['period_id']}) призупинена")
+
+        elif task == "period_resumed":
+            print(f"Подія {data['event_id']}, період {data['period_count']} ({data['period_id']}) поновлена")
+
+        elif task == "ball_possesion_changed":
+            print(f"Подія {data['event_id']}, період {data['period_count']} ({data['period_id']}), перехід контролю м'яча: м'яч {'лівої команди' if data['possession_index'] == 0 else 'правої команди' if data['possession_index'] == 2 else 'нічій'}")
+
         return JsonResponse(data, safe=False)

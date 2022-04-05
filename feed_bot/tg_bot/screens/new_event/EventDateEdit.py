@@ -34,10 +34,10 @@ class EventDateEdit(Screen):
             fields=["id"], 
             )[0][0]
 
-            Utils.api("update", 
+            Utils.api("execute_method",
             model="Event",
-            filter_params={"id": event_id},
-            update_params={"date_scheduled": text}        
+            params={"id": event_id},
+            method={"name": "update_template", "params": ["date_scheduled", text]},
             )
 
             return Utils.api("execute_method",

@@ -1,3 +1,5 @@
+from decouple import config
+
 from django.http import HttpResponse, JsonResponse
 from django.shortcuts import render
 from django.views.generic import TemplateView
@@ -13,24 +15,20 @@ class Index(TemplateView):
 
     data = []
 
+    server_address = config("server_address")
+    requests_interval = config("server_ajax_update_interval")
+
     def get(self, request):
-        return render(request, "index.html") 
+        return render(request, "index/index.html", context={"server_address": self.server_address, "requests_interval": self.requests_interval}) 
     
     def post(self, request):
-
-        task = request.POST["task"]
-
-        if task == "update":
-            self.data.append({"id": request.POST["id"], "text": request.POST["text"]})
-            return HttpResponse(request, "", status=200)
-        elif task == "get":
-            return JsonResponse(self.data, safe=False)
+        pass
 
 
 @csrf_exempt
 def index(request, data=[]):
-    if request.method == "POST":
-        data.append({"id": request.POST["id"], "text": request.POST["text"]})
+    
+    
 
     rv = '''
     <!DOCTYPE html>
@@ -65,7 +63,4 @@ def index(request, data=[]):
     rv += '''
       </table>
     </body>
-    '''
-
-    return HttpResponse(rv)
-    
+    '''   

@@ -33,10 +33,23 @@ class EventPanelActive(Screen):
         )[0]
 
         period_count = 0
+        is_paused = 0
+
         for period_id in event_periods_ids.split(";"):
             if period_id:
                 period_count += 1
                 last_period_id = int(period_id)
+                is_paused = Utils.api("get",
+                model="Period",
+                params={"id": last_period_id},
+                fields=["is_paused",]
+                )[0][0]
+
+        coin_tosses_before_periods = Utils.api("get",
+        model="RulesSet",
+        params={"id": rules_set_id},
+        fields=["coin_tosses_before_periods"]
+        )[0][0]
 
         if event_status == 0: # being created
             
@@ -47,14 +60,8 @@ class EventPanelActive(Screen):
             )[0]
 
         elif event_status == 1: # awaiting start
-            
-            coin_tosses_before_periods = Utils.api("get",
-            model="RulesSet",
-            params={"id": rules_set_id},
-            fields=["coin_tosses_before_periods"]
-            )[0][0]
 
-            if coin_tosses_before_periods.split(";")[period_count] == "1":
+            if eval(coin_tosses_before_periods)[period_count] == "1": # not decreasing period count as period is already inited
                 
                 return Utils.api("execute_method",
                 model="Event",
@@ -76,19 +83,8 @@ class EventPanelActive(Screen):
                 )[0]
 
         elif event_status == 3: #between periods
-            
-            coin_tosses_before_periods = Utils.api("get",
-            model="RulesSet",
-            params={"id": rules_set_id},
-            fields=["coin_tosses_before_periods"]
-            )[0][0]
 
-            period_count = 0
-            for period_id in event_periods_ids.split(";"):
-                if period_id:
-                    period_count += 1
-
-            if coin_tosses_before_periods.split(";")[period_count] == "1":
+            if eval(coin_tosses_before_periods)[period_count] == "1": # not decreasing period count as period is already inited
                 
                 return Utils.api("execute_method",
                 model="Event",
@@ -111,17 +107,6 @@ class EventPanelActive(Screen):
 
         elif event_status == 2: #in progress
             
-            is_paused = 0
-
-            for period_id in event_periods_ids.split(";"):
-                if period_id:
-                    res = Utils.api("get",
-                    model="Period",
-                    params={"id": int(period_id)},
-                    fields=["is_paused",])
-                    if len(res) > 0:
-                        is_paused = res[0][0]
-
             if is_paused:
 
                 return Utils.api("execute_method",

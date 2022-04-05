@@ -12,5 +12,5 @@ import os
 from django.core.asgi import get_asgi_application
 
 os.environ.setdefault('DJANGO_SETTINGS_MODULE', 'meta.settings')
-
+disable_logging=True
 application = get_asgi_application()
