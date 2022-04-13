@@ -1,0 +1,5 @@
+<div id="content_sandwich">
+    {% for id, name in rules_sets %}
+        {% include "./button/button.html" with button_id=id button_name=name %} 
+    {% endfor %}
+</div>

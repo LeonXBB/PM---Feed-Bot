@@ -7,6 +7,9 @@ from django.views.generic import TemplateView
 from django.utils.decorators import method_decorator
 from django.views.decorators.csrf import csrf_exempt
 
+from channels.layers import get_channel_layer
+from asgiref.sync import async_to_sync
+
 import time
 import datetime
 
@@ -269,6 +272,8 @@ class BotAPI(TemplateView):
 @method_decorator(csrf_exempt, name="dispatch")
 class BotLogicAPI(TemplateView): # TODO
 
+    channel_layer = get_channel_layer()
+
     def post(self, request):
 
         from .models.logic.event.Event import Event
@@ -340,8 +345,15 @@ class BotLogicAPI(TemplateView): # TODO
             print(f"Подія {data['event_id']} запланована на {datetime_string}")
 
         elif task == "event_started":
-            
+
+            rules_set_id = Event._get_({"id": data["event_id"]})[0].rules_set_id
+
             print(f"Подія {data['event_id']} почалася")
+
+            async_to_sync(self.channel_layer.group_send)(
+                f"events_list_{rules_set_id}",
+                {"type": "send", "message": "for_testing_purposed_only"}
+            )
 
         elif task == "event_ended":
             print(f"Подія {data['event_id']} завершена")
@@ -417,6 +429,11 @@ class BotLogicAPI(TemplateView): # TODO
             point_type_name = eval(RulesSet._get_({"id": event.rules_set_id})[0].scores_names)[data["point_type"]]
 
             print(f"Зміна рахунку команди {team_name}, період {data['period_count']} ({data['period_id']}) події {data['event_id']}. Тип: {point_type_name}, значення: {data['point_value']}, нове значення рахунку: {data['team_score']}")
+
+            async_to_sync(self.channel_layer.group_send)(
+                f"events_list_{event.rules_set_id}",
+                {"type": "append.new.event", "content": event.id}
+            )
 
         elif task == "point_cancelled":
             pass
