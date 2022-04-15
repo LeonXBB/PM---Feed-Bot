@@ -10,6 +10,7 @@
         <script src=" {% static '/js/utils/update_datetime.js' %} "></script>
         <script src=" {% static '/js/sockets/rules_sets.js' %} "></script>
         <script src=" {% static '/js/main.js' %} "></script>
+        <script src=" {% static '/js/sockets/event.js' %} "></script>
         <script src=" {% static '/js/sockets/events_list.js' %} "></script>
     </head>
     <body>
@@ -55,11 +56,10 @@
                 </div>
             </div>
 
-            <div class="flex_column evened" id="content">
-                <div class="flex_row bordered none" id="rules_set_row">
-                </div>
-                <div class="centered_x flex_row bordered none" id="content_tables">
-                </div>
+            <div class="flex_row bordered none" id="rules_set_row">
+            </div>
+
+            <div class="flex_row centered_x" id="content">
             </div>
 
             <div class="fake_div filled grey" style="overflow-y: visible"></div> 

@@ -351,6 +351,11 @@ class BotLogicAPI(TemplateView): # TODO
             print(f"Подія {data['event_id']} почалася")
 
             async_to_sync(self.channel_layer.group_send)(
+                f"events_list_{event.rules_set_id}",
+                {"type": "append.new.event", "content": event.id}
+            )
+
+            async_to_sync(self.channel_layer.group_send)(
                 f"events_list_{rules_set_id}",
                 {"type": "send", "message": "for_testing_purposed_only"}
             )
@@ -428,11 +433,13 @@ class BotLogicAPI(TemplateView): # TODO
             team_name = Team._get_({"id": data["team_id"]})[0].name
             point_type_name = eval(RulesSet._get_({"id": event.rules_set_id})[0].scores_names)[data["point_type"]]
 
-            print(f"Зміна рахунку команди {team_name}, період {data['period_count']} ({data['period_id']}) події {data['event_id']}. Тип: {point_type_name}, значення: {data['point_value']}, нове значення рахунку: {data['team_score']}")
-
             async_to_sync(self.channel_layer.group_send)(
-                f"events_list_{event.rules_set_id}",
-                {"type": "append.new.event", "content": event.id}
+                f'event_data_{event.id}',
+                {"type": "update.scores", "content": event.id}
+            )
+            async_to_sync(self.channel_layer.group_send)(
+                f'event_data_{event.id}',
+                {"type": "update.messages", "content": f"Зміна рахунку команди {team_name}, період {data['period_count']} ({data['period_id']}) події {data['event_id']}. Тип: {point_type_name}, значення: {data['point_value']}, нове значення рахунку: {data['team_score']}"}
             )
 
         elif task == "point_cancelled":

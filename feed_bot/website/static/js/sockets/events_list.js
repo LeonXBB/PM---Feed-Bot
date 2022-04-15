@@ -1,64 +1,21 @@
-var fake_div_str = '<div class="fake_div" id="central_divider" style="width: 15px; height: calc(100% + 30 px);"></div>';
-
-function load_event_data(event_id) {
-    
-    let event_data_table = document.getElementById("event_data_table");
-
-    event_data_table.innerHTML += '<table>t1</table>'; //api
-    event_data_table.innerHTML += '<table>t2</table>'; //stats
-}
+var central_div_str = '<div id="central_divider"></div>';
+var right_div_str = '<div id="right_divider"></div>';
 
 function select_event(event_id) {
        
     if (document.getElementById("central_divider") === null) {
-        document.getElementById("content_tables").innerHTML += fake_div_str; 
+        document.getElementById("content").innerHTML += central_div_str; 
     }
 
-    if (document.getElementById("event_data_table") === null) {
-        document.getElementById("content_tables").innerHTML += '<div id="event_data_table"></div>';
-        
-        let event_data_table = document.getElementById("event_data_table");
-        
+    if (document.getElementById("event_data") === null) {
+        document.getElementById("content").innerHTML += '<div class="flex_column between" id="event_data"></div>';
         load_event_data(event_id);
     }
 
-    if (document.getElementById("selected_event_arrow") === null) {
-        
-        //retreive live td position
-        let event_row = document.getElementById(`event_${event_id}`);
-        let live_event_cell = event_row.getElementsByClassName("live_event")[0];
-        
-        let live_event_cell_position = live_event_cell.getBoundingClientRect();
-        let live_event_cell_position_x = live_event_cell_position.x;
-        let live_event_cell_position_y = live_event_cell_position.y;
-
-        let live_event_cell_width = live_event_cell.offsetWidth;
-        let live_event_cell_height = live_event_cell.offsetHeight;
-        
-        //calculate image_coordinates and image_size
-        let image_size = {
-            width: live_event_cell_width * 2,
-            height: live_event_cell_height * 7
-        };
-        
-        let image_coordinates = {
-            x: live_event_cell_position_x + live_event_cell_width * 1.5 + 1 - image_size.width / 2,
-            y: live_event_cell_position_y - live_event_cell_height * 1.5 - image_size.height / 4
-        };
-
-        //create image
-        let image = document.createElement("img", {"id": "selected_event_arrow"});
-        image.src = "./../static/img/uix/selected_event_arrow.png";
-
-        image.style.position = "absolute";
-        image.style.left = image_coordinates.x + "px";
-        image.style.top = image_coordinates.y + "px";
-        image.style.width = image_size.width + "px";
-        image.style.height = image_size.height + "px";
-
-        document.getElementById("central_divider").appendChild(image);
+    if (document.getElementById("right_divider") === null) {
+        document.getElementById("content").innerHTML += right_div_str;
+    
     }
-
 }
 
 function unselect_event(event_id) {
@@ -67,12 +24,12 @@ function unselect_event(event_id) {
         document.getElementById("central_divider").remove();
     }
 
-    if (document.getElementById("selected_event_arrow") != null) {
-        document.getElementById("selected_event_arrow").remove();
+    if (document.getElementById("event_data") != null) {
+        document.getElementById("event_data").remove();
     }
 
-    if (document.getElementById("event_data_table") != null) {
-        document.getElementById("event_data_table").remove();
+    if (document.getElementById("right_divider") != null) {
+        document.getElementById("right_divider").remove();
     }
 
 }
@@ -131,6 +88,8 @@ function get_row(data, i) {
         rv += "<td><img class='live_event' src='./../static/img/uix/non_live.png'></td>";
     }
 
+    rv += "<td><img class='event_row_arrow' src='./../static/img/uix/selected_event_arrow.png'></td>";
+
     rv += "</tr>";
 
     return rv;
@@ -138,7 +97,7 @@ function get_row(data, i) {
 
 function get_html_string(data, button_id) {
 
-    let rv = "<table class='centered_x' id='events_table'>";
+    let rv = "<div class='events_table_div'><table class='centered_x' id='events_table'>";
     
     //if (data.length == 0) {
     //    rv += "<tr><td>No events found</td></tr>"; TODO something like this
@@ -148,13 +107,13 @@ function get_html_string(data, button_id) {
         
         rv += get_row(data, i)
     
-        if (i >= 4*(max_events_to_show-1)) {
+        if (i >= 7*(max_events_to_show-1)) {
             rv += `<tr><td colspan="5"><button class="centered_y generic_button bordered grey" id="show_more_events_button" onclick=show_more_events(${button_id})>ЗАГРУЗИТЬ ЕЩЕ</button></td></tr></table>`;
             return rv;
         };
     }
 
-    rv += "</table>";   
+    rv += "</table></div>";   
 
     return rv;
 }
@@ -165,15 +124,14 @@ function show_event_list_for_rules_set(button_id, append=false) {
 
     let button = document.getElementById(button_id);
 
-    window.events_socket.send(rules_set_id);
-    
+    window.events_socket.send("rules_set_id=" + rules_set_id);
+
     window.events_socket.onmessage = function(event) {
 
         let data = JSON.parse(event.data);
-        
-        console.log(data.length, document.getElementById("show_more_events_button"));
+
         if (data.length > 7 && document.getElementById("show_more_events_button") === null) {
-            console.log(data[7])
+            
             if (data[7] == "append") {
                 let events_table = document.getElementById("events_table");
                 let new_event_row = get_row(data, 0);
@@ -189,14 +147,14 @@ function show_event_list_for_rules_set(button_id, append=false) {
                 max_events_to_show = max_events_step;
             };
 
-            if (document.getElementById("content_tables").innerHTML.trim() != "") {
+            if (document.getElementById("content").innerHTML.trim() != "") {
                 if (append === false) {
-                    document.getElementById("content_tables").innerHTML = "";
+                    document.getElementById("content").innerHTML = "";
                 } else {
-                    document.getElementById("content_tables").innerHTML = get_html_string(data, button_id);
+                    document.getElementById("content").innerHTML = get_html_string(data, button_id);
                 }
             } else {
-                document.getElementById("content_tables").innerHTML = get_html_string(data, button_id);
+                document.getElementById("content").innerHTML = get_html_string(data, button_id);
             };
         
         } else {
@@ -209,7 +167,7 @@ function show_event_list_for_rules_set(button_id, append=false) {
                 };
             };
 
-            document.getElementById("content_tables").innerHTML = get_html_string(data, button_id);
+            document.getElementById("content").innerHTML = get_html_string(data, button_id);
         };
     };
 };
