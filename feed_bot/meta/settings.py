@@ -88,6 +88,22 @@ DATABASES = {
 
         'ENGINE': 'django.db.backends.postgresql_psycopg2',
 
+        'NAME': 'postgres',
+
+        'USER': config("postgres_user"),
+
+        'PASSWORD': config("postgres_password"),
+
+        'HOST': config("postgres_host"),
+
+        'PORT': config("postgres_port")
+    },
+}
+'''
+    'default': {
+
+        'ENGINE': 'django.db.backends.postgresql_psycopg2',
+
         'NAME': 'default',
 
         'USER': config("postgres_user"),
@@ -142,8 +158,24 @@ DATABASES = {
         'HOST': config("postgres_host"),
 
         'PORT': config("postgres_port")
+    },
+
+    'website': {
+
+        'ENGINE': 'django.db.backends.postgresql_psycopg2',
+
+        'NAME': 'website',
+
+        'USER': config("postgres_user"),
+
+        'PASSWORD': config("postgres_password"),
+
+        'HOST': config("postgres_host"),
+
+        'PORT': config("postgres_port")
     }
 }
+'''
 
 
 # Password validation
@@ -199,7 +231,7 @@ CHANNEL_LAYERS = {
     }
 }
 
-LOGGING = {
-    "version": 1,
-    "disable_existing_loggers": True,
-}
+#LOGGING = {
+#    "version": 1,
+#    "disable_existing_loggers": True,
+#}

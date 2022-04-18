@@ -10,11 +10,13 @@ if __name__ == "__main__":
 
     def start_server():
           
-        root = os.getcwd()
         os.chdir('feed_bot')
         #subprocess.run("daphne -v 0 meta.asgi:application")
-        subprocess.run("python manage.py runserver")
-        os.chdir(root)
+        try:
+            subprocess.run("python manage.py runserver")
+        except:
+            subprocess.run(["python", "manage.py", "runserver"])
+        os.chdir("..")
 
     def start_bot():
         
