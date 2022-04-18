@@ -12,7 +12,8 @@ if __name__ == "__main__":
           
         root = os.getcwd()
         os.chdir('feed_bot')
-        subprocess.run("daphne -v 0 meta.asgi:application")
+        #subprocess.run("daphne -v 0 meta.asgi:application")
+        subprocess.run("python manage.py runserver")
         os.chdir(root)
 
     def start_bot():
@@ -26,8 +27,6 @@ if __name__ == "__main__":
         bot_process = mp.Process(target=start_bot, name="bot")
 
         server_process.start()
-        
-        time.sleep(3) # Bot should start after the server
         bot_process.start()
 
         server_process.join()

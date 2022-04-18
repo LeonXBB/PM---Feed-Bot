@@ -1,21 +1,92 @@
 <!DOCTYPE html>
-{% load static %}
-{{ variable|json_script:'server_address' }}
-{{ variable|json_script:'requests_interval' }}
-<html>
-<head>
-    <meta charset="utf-8">
-    <meta http-equiv="X-UA-Compatible" content="IE=edge">
-    <meta name="viewport" content="width=device-width, initial-scale=1">
-    <title>Feed Bot</title>
+<html lang="uk">
+    <head>
+        {% load static %}
+        <meta charset="UTF-8">
+        <title>ESL Beta</title>
+        <meta name="viewport" content="width=device-width, initial-scale=1.0">
+        <link rel="stylesheet" type="text/css" href=" {% static '/css/styles.css' %} ">
+        <!-- CSS CUSTOM -->
+        <script src=" {% static '/js/utils/update_datetime.js' %} "></script>
+        <script src=" {% static '/js/sockets/rules_sets.js' %} "></script>
+        <script src=" {% static '/js/main.js' %} "></script>
+        <script src=" {% static '/js/sockets/event.js' %} "></script>
+        <script src=" {% static '/js/sockets/events_list.js' %} "></script>
+    </head>
+    <body>
 
-    <!-- get JQuery-->
-    <script src="https://ajax.googleapis.com/ajax/libs/jquery/1.12.4/jquery.min.js"></script>
-    <script src="{% static 'website/js/ajax.js' %}"></script>   
+        <input type="hidden" id="server_address" name="server_address" value="{{ server_address }}">
 
-</head>
-<body>
-    <div id="content">
-    </div>  
-</body>
+        <div class="container">
+            <div class="bottom flex_row evened" id="header">
+                
+                <div class="top flex_row" id="left_side">
+                    <img class="logo_name_img" src="{% static 'img/logo/logo_name_big.png' %}" alt="Logo">
+                    <img class="logo_status_img" src="{% static 'img/logo/logo_status_big.png' %}" alt="Status">
+                </div>
+                
+                <div class="centered_y flex_row centered_x" id="center">
+                    <div class="centered_y", id="datetime">
+                    </div>
+                    <div class="generic_button_div bordered grey" id="archive_button">
+                        <button class="generic_button bordered none">
+                            <div class="generic_button_text" >АРХИВ СОБЫТИЙ</div>
+                        </button>
+                    </div>
+                </div>
+                
+                <div class="centered_y flex_row evened " id="right_side">
+                    <div class="left centered_y">
+                        <button id="user_logo_button">
+                                T
+                        </button>
+                    </div>
+                    <div class="left centered_y flex_row evened break_words">
+                            <div class="centered_y">TRADER</div>
+                            <image src="{% static '/img/uix/auth_dropdown.png' %}" alt="Dropdown arror">
+                            </image>
+                    </div>
+                    <div class="flex_row">
+                        <div class="centered_y" id="exit_button_div">
+                            <img class="centered_y" src="{% static 'img/uix/exit_button.png' %}" alt="Exit button">
+                        </div>
+                        <div class="fake_div"></div>
+                        <div class="break_words bold">Выход</div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="flex_row bordered none" id="rules_set_row">
+            </div>
+
+            <div class="flex_row centered_x" id="content">
+            </div>
+
+            <div class="fake_div filled grey" style="overflow-y: visible"></div> 
+
+            <div class="left flex_row evened" id="footer">
+                <div class="flex_row between">
+                    <div class="flex_row centered_x" id="footer_logo">
+                        <img class="logo_name_img" src="{% static 'img/logo/logo_name_small.png' %}" alt="Logo">
+                        <img class="logo_status_img top" src="{% static 'img/logo/logo_status_small.png' %}" alt="Status">
+                    </div>
+                    <div>
+                        ©2022 EYE SPORT LIVE
+                    </div>
+                    <div class="fake_div"></div>
+                    <div class="fake_div"></div>
+                </div>
+                <div class="flex_row between">
+                    <div>
+                        Архив событий
+                    </div>
+                    <div>
+                        Служба поддержки
+                    </div>
+                    <div>
+                        Контакты
+                    </div>
+                </div>
+            </div>
+    </body>
 </html>

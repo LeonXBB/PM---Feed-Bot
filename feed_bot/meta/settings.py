@@ -13,7 +13,6 @@ https://docs.djangoproject.com/en/4.0/ref/settings/
 from decouple import config
 
 from pathlib import Path
-import logging
 import os
 
 
@@ -29,7 +28,7 @@ SECRET_KEY = config("django_key")
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = config("django_debug_mode")
 
-ALLOWED_HOSTS = []
+ALLOWED_HOSTS = ['*']
 
 # Application definition
 
@@ -40,6 +39,7 @@ INSTALLED_APPS = [
     'django.contrib.sessions',
     'django.contrib.messages',
     'django.contrib.staticfiles',
+    'channels',
     'tg_bot.apps.TgBotConfig',
     'website.apps.WebsiteConfig',
 ]
@@ -75,6 +75,7 @@ TEMPLATES = [
 ]
 
 WSGI_APPLICATION = 'meta.wsgi.application'
+ASGI_APPLICATION = 'meta.asgi.application'
 
 
 # Database
@@ -179,11 +180,11 @@ USE_TZ = True
 # Static files (CSS, JavaScript, Images)
 # https://docs.djangoproject.com/en/4.0/howto/static-files/
 
-STATICFILES_DIRS = ()
-
+STATICFILES_DIRS = [
+    os.path.join(BASE_DIR, 'website\static'),
+    os.path.join(BASE_DIR, 'static'),
+]
 STATIC_URL = "/static/"
-
-STATIC_ROOT = os.path.join(BASE_DIR, "static")
 
 # Default primary key field type
 # https://docs.djangoproject.com/en/4.0/ref/settings/#default-auto-field
@@ -191,3 +192,14 @@ STATIC_ROOT = os.path.join(BASE_DIR, "static")
 DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
 
 DEFAULT_CHARSET = "utf-8"
+
+CHANNEL_LAYERS = {
+    'default': {
+        "BACKEND": "channels.layers.InMemoryChannelLayer"
+    }
+}
+
+LOGGING = {
+    "version": 1,
+    "disable_existing_loggers": True,
+}
