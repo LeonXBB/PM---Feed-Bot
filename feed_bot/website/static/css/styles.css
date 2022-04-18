@@ -330,6 +330,26 @@
     max-width: 80vw;
     height: 40%;
 }
+.period_number {
+    font-size: xx-large;
+}
+.team_name {
+    font-size: xx-large;
+    width: 50%;
+}
+.period_score {
+    font-size: xx-large;
+    width: 10%;
+}
+.total_score_div {
+    width: 30%;
+    height: auto;
+}
+.total_score {
+    font-size: xx-large;
+    text-align: center;
+    background-color: rgb(241, 241, 241);
+}
 
 .messages_table_div {
 

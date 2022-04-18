@@ -1,6 +1,5 @@
 # TODO update from pooling to webhook (look https://pythondigest.ru/view/23089/ for an example)
 
-from turtle import pen
 from decouple import config
 
 import telebot

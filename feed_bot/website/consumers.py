@@ -86,7 +86,7 @@ class EventConsumer(WebsocketConsumer):
                         else:
                             score[1] += point.value
             except Exception as e:
-                print(e)
+                pass
 
             return score
 
@@ -95,6 +95,7 @@ class EventConsumer(WebsocketConsumer):
             async_to_sync(self.channel_layer.group_add)(f'event_data_{event_id}', self.channel_name)
     
         from tg_bot.models import Event, Period, Point, Team, RulesSet
+        from website.models import APIMessage
 
         event = Event._get_({'id': int(event_id)})[0]
 
@@ -114,13 +115,29 @@ class EventConsumer(WebsocketConsumer):
 
         mess.extend((home_team_name, away_team_name, len(list(period_id for period_id in event.periods_ids.split(";") if period_id)), total[0], total[1]))
 
+        try:
+            mess.append("messages_start")
+
+            for message in APIMessage.objects.filter(event_id=int(event_id)):
+                mess.extend((f"{message.hour}:{message.minute}:{message.second}", f"{message.score_1}:{message.score_2}", message.message))
+
+            mess.append("messages_end")
+        except Exception as e:
+            print(e)
+
         self.send(text_data=json.dumps(mess))
 
     def update_messages(self, channel_event):
-        self.send(text_data=json.dumps(f"new_message_{channel_event.get('content')}"))
+
+        mess = f"new_message_{channel_event.get('time')}_{channel_event.get('scores')}_{channel_event.get('message')}"
+
+        self.send(text_data=json.dumps(mess))
 
     def update_scores(self, channel_event):
-        self.receive(text_data=f"event_id={channel_event.get('content')}")
+
+        mess = f"new_score_{channel_event.get('content_team')}_{channel_event.get('content_period')}_{channel_event.get('content_value')}_{channel_event.get('content_score')}"
+
+        self.send(text_data=json.dumps(mess))
 
     def update_stats(self, channel_event):
         pass
