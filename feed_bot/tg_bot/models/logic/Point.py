@@ -17,6 +17,7 @@ class Point(LogicModel):
 
     type = models.IntegerField(default=-1)
     value = models.IntegerField(default=1)
+    opposite_value = models.IntegerField(default=0)
 
     def happen(self, event_id, period_id, team_id, at_score, type):
         

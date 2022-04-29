@@ -17,8 +17,8 @@ class FeedBot(TeleBot):
 
     def run(self):
 
-        Utils.init_screens("bot")
         Utils.api("kick_in")
+        Utils.init_screens("bot")
 
         print(f"Feed Bot running with connection {str(self.connection)}") #TODO change to logger
         self.connection.run()

@@ -70,6 +70,8 @@ class EventConsumer(WebsocketConsumer):
 
         def get_period_score(period_number):
             
+            global periods 
+
             score = [0, 0]
             periods = [period_id for period_id in event.periods_ids.split(";") if period_id]
 
@@ -83,8 +85,10 @@ class EventConsumer(WebsocketConsumer):
                         point = Point._get_({'id': int(point_id)})[0]
                         if point.team_id == event.home_team_id:
                             score[0] += point.value
+                            score[1] += point.opposite_value
                         else:
                             score[1] += point.value
+                            score[0] += point.opposite_value
             except Exception as e:
                 pass
 
@@ -103,6 +107,9 @@ class EventConsumer(WebsocketConsumer):
         away_team_name = Team._get_({'id': event.away_team_id})[0].name
     
         periods_in_event = RulesSet._get_({'id': event.rules_set_id})[0].periods_in_event
+
+        if periods_in_event == 0:
+            periods_in_event = len(periods)
 
         mess = [periods_in_event, ]
 
@@ -135,7 +142,9 @@ class EventConsumer(WebsocketConsumer):
 
     def update_scores(self, channel_event):
 
-        mess = f"new_score_{channel_event.get('content_team')}_{channel_event.get('content_period')}_{channel_event.get('content_value')}_{channel_event.get('content_score')}"
+        mess = f"new_score_{channel_event.get('content_team')}_{channel_event.get('content_period')}_{channel_event.get('content_value')}_{channel_event.get('content_score')}_{channel_event.get('content_opposite_value')}_{channel_event.get('content_opposite_score')}"
+
+        self.send(text_data=json.dumps(mess))
 
         self.send(text_data=json.dumps(mess))
 

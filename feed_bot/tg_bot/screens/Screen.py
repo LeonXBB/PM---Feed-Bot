@@ -57,7 +57,7 @@ class Screen():
         elif via == "bot":
             return via_bot()
 
-    def get_keyboards(self):
+    def get_keyboards(self, data=None, via=None):
         return []
 
     def __init__(self, via, screen_id="-1", screen_name="") -> None:
@@ -66,7 +66,8 @@ class Screen():
         self.screen_name = screen_name
     
         self.strings = self.get_strings(via)
-        self.keyboards = self.get_keyboards()
+        self.keyboards = self.get_keyboards(None, via)
+
 
         self.screens.append(self)
 

@@ -4,7 +4,7 @@ from ..Remainder import Remainder
 
 class PeriodStart(Remainder):
 
-    def get_keyboards(self):
+    def get_keyboards(self, data=None, via=None):
         
         start = {"text": self.strings[1][0], "data": "r_0_10_{}"}
 

@@ -32,10 +32,10 @@ def check_time_outs(team_side_index, event_id):
     fields=["id",]
     ))
 
-    def check_time_outs_in_period(): # check if any of the teams has a right to a time out in a given period
-        return max(eval(time_outs_per_team_per_period)[periods_count - 1]) > 0
+    def check_time_outs_in_period(): # check if the any of the teams has a right to a time out in a given period
+        return max(time_outs_per_team_per_period[team_side_index][periods_count - 1], time_outs_per_team_per_period[team_side_index == 0][periods_count - 1]) > 0
 
     def check_availability(team_side_index): # check if a team has any of the number of time outs available
-        return time_outs_count < eval(time_outs_per_team_per_period)[periods_count - 1][team_side_index]
+        return time_outs_count < time_outs_per_team_per_period[team_side_index][periods_count - 1]
 
     return 0 if not check_time_outs_in_period() else 1 if not check_availability(team_side_index) else 2

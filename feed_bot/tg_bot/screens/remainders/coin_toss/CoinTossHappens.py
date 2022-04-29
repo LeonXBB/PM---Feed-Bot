@@ -6,7 +6,7 @@ from ..Remainder import Remainder
 
 class CoinTossHappens(Remainder):
 
-    def get_keyboards(self):
+    def get_keyboards(self, data=None, via=None):
         
         enter = {"text": self.strings[1][0], "data": "r_1_40_{}"}
 

@@ -6,7 +6,7 @@ from ...bin.utils import Utils
 
 class EventListNoEvents(Screen):
 
-    def get_keyboards(self):
+    def get_keyboards(self, data=None, via=None):
         
         go_back = {"text": self.strings[1][0], "data": "0_0"}
 

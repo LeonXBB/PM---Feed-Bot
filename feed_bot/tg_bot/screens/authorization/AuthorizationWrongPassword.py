@@ -10,7 +10,7 @@ class AuthorizationWrongPassword(Screen):
     def __init__(self, via) -> None:
         super().__init__(via, "01", "AuthorizationWrongPassword")
 
-    def text(self, text, user_id):
+    def text(self, text, user_id): #TODO move to user class
 
         found_pass_obj = Utils.api("get",
         model="PasswordPair",

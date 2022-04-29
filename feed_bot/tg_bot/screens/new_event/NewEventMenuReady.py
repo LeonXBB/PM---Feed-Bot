@@ -8,7 +8,7 @@ from ..remainders.Remainder import Remainder
 
 class NewEventMenuReady(Screen):
     
-    def get_keyboards(self):
+    def get_keyboards(self, data=None, via=None):
         
         edit_home_team_name = {"text": self.strings[1][0], "data": "0_0"}
         edit_away_team_name = {"text": self.strings[1][1], "data": "0_1"}

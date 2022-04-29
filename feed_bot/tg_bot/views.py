@@ -1,3 +1,4 @@
+from asyncio import sleep
 from django.shortcuts import render
 
 from django.http import HttpResponse, JsonResponse
@@ -9,6 +10,11 @@ from django.views.decorators.csrf import csrf_exempt
 
 from channels.layers import get_channel_layer
 from asgiref.sync import async_to_sync
+
+from decouple import config
+
+import gspread
+from oauth2client.service_account import ServiceAccountCredentials
 
 import time
 import datetime
@@ -264,7 +270,134 @@ class BotAPI(TemplateView):
             return JsonResponse(rv, safe=False)
 
         elif task == "kick_in":
+
+            def google_sheets_magic(sheet_type):
+
+                sleep_time = 1
+                passed = False
+
+                while not passed:
+                    
+                    try:
+                        scope = ["https://spreadsheets.google.com/feeds",'https://www.googleapis.com/auth/spreadsheets',"https://www.googleapis.com/auth/drive.file","https://www.googleapis.com/auth/drive"]
+                        creds = ServiceAccountCredentials.from_json_keyfile_name("tg_bot/creds.json", scope)
+                        client = gspread.authorize(creds)
+                        sheet = client.open(config(sheet_type)).sheet1  # Open the spreadhseet
+
+                        return sheet
+
+                    except:
+                        print("Error connecting to Google Sheets. Retrying in {} seconds...".format(sleep_time))
+                        time.sleep(sleep_time)
+                        sleep_time *= 2
+
+            def init_localization():
+                
+                def init_text_languages():
+                    
+                    def init_text_language(language_index):
+                        
+                        print('here', language_index)
+
+                        new_obj = models.TextLanguage()
+                        
+                        sleep_time = 1
+                        passed = False
+
+                        while not passed:
+
+                            try:
+
+                                if localziation_sheet.cell(4, language_index).value:
+                                    new_obj.self_name = localziation_sheet.cell(4, language_index).value
+                                passed = True 
+
+                            except:
+
+                                print(f"Hit Google API limit while downloading languages, point {language_index-2} / 5, sleeping for {sleep_time} seconds...") #TODO change to logger
+                                time.sleep(sleep_time)
+                                sleep_time *= 2
+
+                        new_obj.save()
+
+                    models.TextLanguage.objects.all().delete()
+
+                    for i in range(3, 8):
+                        init_text_language(i)
+
+                def init_text_strings():
+                    
+                    def init_text_string(string_index):
+                        
+                        new_obj = models.TextString()
+
+                        sleep_time = 1
+                        passed = False
+
+                        while not passed:
+
+                            try:
+                                
+                                for i in range(1,8):
+                                    if localziation_sheet.cell(string_index, i).value:
+                                        setattr(new_obj, localziation_sheet.cell(3, i).value, localziation_sheet.cell(string_index, i).value)
+
+                                passed = True
+                            
+                            except:
+                                print(f"Hit Google API limit while downloading text strings, point {string_index-5}, sleeping for {sleep_time} seconds...")
+                                time.sleep(sleep_time)
+                                sleep_time *= 2
+
+                        new_obj.save()
+
+                    models.TextString.objects.all().delete()
+
+                    for i in range(5, len(localziation_sheet.get_all_values())):
+                        init_text_string(i)
+
+                init_text_languages()
+                init_text_strings()
+
+            def init_rules_sets():
+
+                def init_rule_set(sheet_col_index):
+                    
+                    new_obj = models.RulesSet()
+
+                    for i in range(1, params_count+1):
+                        
+                        sleep_time = 1
+                        passed = False
+                        
+                        while not passed:
+                            try:
+                                if rules_sets_sheet.cell(i, 1) and rules_sets_sheet.cell(i, 1).value:
+                                    
+                                    setattr(new_obj, rules_sets_sheet.cell(i, 1).value.split("\n")[0], rules_sets_sheet.cell(i, sheet_col_index).value)
+
+                                passed = True
+
+                            except:
+                                print(f"Hit Google API limit while downloading rules sets, point {i} / {params_count}, sleeping for {sleep_time} seconds...") #TODO change to logger
+                                time.sleep(sleep_time)
+                                sleep_time *= 2
+
+                    new_obj.save()
+
+                models.RulesSet.objects.all().delete()
+
+                rules_sets_count = len(rules_sets_sheet.get_all_values()[0]) - 1
+                params_count = len(rules_sets_sheet.get_all_values())
+                for i in range(2, rules_sets_count+2):
+                    init_rule_set(i)
+
+            #localziation_sheet = google_sheets_magic("localization_table_name")
+            #rules_sets_sheet = google_sheets_magic("rules_sets_schema_table_name")
             
+            #init_localization()
+            #init_rules_sets()
+
             Utils.init_screens("server")
 
             return JsonResponse([0, ], safe=False)
@@ -284,7 +417,13 @@ class BotLogicAPI(TemplateView): # TODO
         task = data["task"]
 
         if task == "event_template_created":
-            print(f"Подія {data['id']} створена")
+            
+            event = Event.objects.get(id=data["event_id"])
+
+            string = f"Подія {data['event_id']} створена"
+            mess = APIMessage()
+            mess.add(event.id, string)
+            mess.send()
 
         elif task == "event_template_updated":
             
@@ -331,7 +470,10 @@ class BotLogicAPI(TemplateView): # TODO
 
             old_val, new_val = get_verbose_vals()
 
-            print(f"Подія {data['id']} оновлена, параметр {data['attr']} змінено з {old_val} на {new_val}")
+            string = f"Подія {data['event_id']} оновлена, параметр {data['attr']} змінено з {old_val} на {new_val}"
+            mess = APIMessage()
+            mess.add(event.id, string)
+            mess.send()
 
         elif task == "event_scheduled":
 
@@ -409,7 +551,7 @@ class BotLogicAPI(TemplateView): # TODO
 
             team_name = Team._get_({"id": data["team_id"]})[0].name
             event = Event._get_({"id": data["event_id"]})[0]
-            action_name = eval(RulesSet._get_({"id": event.rules_set_id})[0].actions_list)[data["action_type"]]
+            action_name = RulesSet._get_({"id": event.rules_set_id})[0].actions_list[data["action_type"]]
 
             string = f"Дія {action_name} ({data['action_id']}) команди {team_name}, період {data['period_count']} ({data['period_id']}) події {data['event_id']}"
             mess = APIMessage()
@@ -421,14 +563,21 @@ class BotLogicAPI(TemplateView): # TODO
 
         elif task == "coin_toss_scheduled":
 
+            event = Event._get_({'id': data["event_id"]})[0]
             datetime_string = datetime.datetime.fromtimestamp(data["coin_toss_epoch"], None)
 
-            print(f"Жеребкування # {data['coin_toss_count'] + 1} перед періодом {data['period_count'] + 1} події {data['event_id']} заплановано на {datetime_string}")
+            string = f"Жеребкування # {data['coin_toss_count'] + 1} перед періодом {data['period_count'] + 1} події {data['event_id']} заплановано на {datetime_string}"
+            mess = APIMessage()
+            mess.add(event.id, string)
+            mess.send()
 
         elif task == "coin_toss_started":
             
-            print(f"Жеребкування # {data['coin_toss_count'] + 1} ({data['coin_toss_id']}) перед періодом {data['period_count'] + 1} події {data['event_id']} почалося")
-        
+            string = f"Жеребкування # {data['coin_toss_count'] + 1} ({data['coin_toss_id']}) перед періодом {data['period_count'] + 1} події {data['event_id']} почалося"
+            mess = APIMessage()
+            mess.add(data["event_id"], string)
+            mess.send()
+
         elif task == "coin_toss_edited":
 
             attr = "Команда зліва" if data["attr"] == "left_team_id" else "Команда, що починає"
@@ -439,7 +588,10 @@ class BotLogicAPI(TemplateView): # TODO
             except:
                 val = ""
 
-            print(f"Жеребкування # {data['coin_toss_count']} ({data['coin_toss_id']}) перед періодом {data['period_count'] + 1} події {data['event_id']}: нове значення параметру {attr}: {val}")
+            string = f"Жеребкування # {data['coin_toss_count']} ({data['coin_toss_id']}) перед періодом {data['period_count'] + 1} події {data['event_id']}: нове значення параметру {attr}: {val}"
+            mess = APIMessage()
+            mess.add(event.id, string)
+            mess.send()
 
         elif task == "coin_toss_saved":
             
@@ -466,14 +618,14 @@ class BotLogicAPI(TemplateView): # TODO
 
             event = Event._get_({"id": data["event_id"]})[0]
             team_name = Team._get_({"id": data["team_id"]})[0].name
-            point_type_name = eval(RulesSet._get_({"id": event.rules_set_id})[0].scores_names)[data["point_type"]]
+            point_type_name = RulesSet._get_({"id": event.rules_set_id})[0].scores_names[data["point_type"]]
 
             async_to_sync(self.channel_layer.group_send)(
                 f'event_data_{event.id}',
-                {"type": "update.scores", "content_team": 0 if data["team_id"] == event.home_team_id else 1, "content_period": data["period_count"]-1, "content_value": data["point_value"], "content_score": data["team_score"]}
+                {"type": "update.scores", "content_team": 0 if data["team_id"] == event.home_team_id else 1, "content_period": data["period_count"]-1, "content_value": data["point_value"], "content_opposite_value": data["opposite_point_value"], "content_score": data["new_team_score"], "content_opposite_score": data["new_opposite_team_score"]}
             )
 
-            string = f"Зміна рахунку команди {team_name}. Тип: {point_type_name}, вага: {data['point_value']}, нове значення рахунку: {data['team_score']}"
+            string = f"Зміна рахунку команди {team_name}. Тип: {point_type_name}, вага: {data['point_value']}, вага протилежної команди: {data['opposite_point_value']}, нове значення рахунку: {data['new_team_score']}, протилежної команди: {data['opposite_team_score']}"
             mess = APIMessage()
             mess.add(event.id, string)
             mess.send()

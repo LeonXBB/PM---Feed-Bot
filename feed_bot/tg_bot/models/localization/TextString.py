@@ -22,8 +22,8 @@ class TextString(models.Model): #TODO make connection with outside dictionary
     screen_id = models.CharField(max_length=5096, default="")
     position_index = models.IntegerField(default=-1)
 
-    language_1 = models.CharField(max_length=5096, blank=True)
-    language_2 = models.CharField(max_length=5096, blank=True)
-    language_3 = models.CharField(max_length=5096, blank=True)
-    language_4 = models.CharField(max_length=5096, blank=True)
-    language_5 = models.CharField(max_length=5096, blank=True)
+    language_1 = models.CharField(max_length=5096, blank=True, default="")
+    language_2 = models.CharField(max_length=5096, blank=True, default="")
+    language_3 = models.CharField(max_length=5096, blank=True, default="")
+    language_4 = models.CharField(max_length=5096, blank=True, default="")
+    language_5 = models.CharField(max_length=5096, blank=True, default="")

@@ -7,7 +7,7 @@ from .._utils.checks import check_time_outs
 
 class ControlPanelActive(Screen):
 
-    def get_keyboards(self, data=None):
+    def get_keyboards(self, data=None, via=None): # TODO rewrite in respect to via server / bot
         
         def get_ball_string() -> list:
             return Utils.api("get",
@@ -40,7 +40,7 @@ class ControlPanelActive(Screen):
             return Utils.api("get",
             model="RulesSet",
             params={"id": rules_set_id},
-            fields=["scores_names", "time_outs_per_team_per_period", "actions_list"]
+            fields=["scores_names", "actions_list"]
             )[0]
 
         def get_head_row_button(index):
@@ -56,7 +56,7 @@ class ControlPanelActive(Screen):
             
             rv = []
 
-            for i, score_name in enumerate(eval(scores_names)):
+            for i, score_name in enumerate(scores_names):
                 rv.append(list())
                 for team_side_index in range(2):
                     rv[-1].append(get_point_button(team_side_index, i, score_name))
@@ -76,9 +76,7 @@ class ControlPanelActive(Screen):
 
             def get_time_out_button(team_side_index, active):
                 return {"text": self.strings[1][active + 3], "data": f"4_{team_side_index}_{active}" + "_{}"}
-
-            time_outs_count = [get_time_out_count(i) for i in range(2)]
-                                      
+                                     
             for team_side_index in range(2):
                 res = check_time_outs(team_side_index, event_id) # 0 - no time outs in period, 1 - time outs in period, 2 - time outs in period and available
                 if res != 0:    
@@ -93,7 +91,7 @@ class ControlPanelActive(Screen):
 
             rv = []
 
-            for action_index, action_name in enumerate(eval(actions_list)):
+            for action_index, action_name in enumerate(actions_list):
                 rv.append(list())
                 for team_side_index in range(2):
                     rv[-1].append(get_action_button(team_side_index, action_index, action_name))
@@ -110,7 +108,7 @@ class ControlPanelActive(Screen):
 
         period_count = get_period_count()
            
-        scores_names, time_outs_per_team_per_period, actions_list = get_rules()
+        scores_names, actions_list = get_rules()
 
         header = [get_head_row_button(i) for i in range(3)]
         if (res:= get_point_buttons()) is not None: points = [*res]

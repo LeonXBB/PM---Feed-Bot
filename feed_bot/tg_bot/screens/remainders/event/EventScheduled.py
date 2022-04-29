@@ -3,7 +3,7 @@ from ..Remainder import Remainder
 
 class EventScheduled(Remainder):
 
-    def get_keyboards(self):
+    def get_keyboards(self, data=None, via=None):
         
         ok = {"text": self.strings[1][0], "data": "r_0_04_{}"}
         start = {"text": self.strings[1][1], "data": "r_1_04_{}"}
@@ -34,7 +34,7 @@ class EventScheduled(Remainder):
             if period_id:
                 period_count += 1
 
-        if eval(coin_tosses_before_periods)[period_count] == "1": # not decreasing the period count as period is already inited
+        if coin_tosses_before_periods[period_count] == 1: # not decreasing the period count as period is already inited
             
             return Utils.api("execute_method",
             model="Event",

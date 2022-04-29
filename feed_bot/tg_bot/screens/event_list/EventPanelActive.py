@@ -4,7 +4,7 @@ from ..Screen import Screen
 
 class EventPanelActive(Screen):
 
-    def get_keyboards(self):
+    def get_keyboards(self, data=None, via=None):
             
             cancel = {"text": self.strings[1][0], "data": "d_43_0_{}"}
             control_panel = {"text": self.strings[1][1], "data": "d_43_1_{}"}
@@ -61,7 +61,7 @@ class EventPanelActive(Screen):
 
         elif event_status == 1: # awaiting start
 
-            if eval(coin_tosses_before_periods)[period_count] == "1": # not decreasing period count as period is already inited
+            if coin_tosses_before_periods[period_count] == 1: # not decreasing period count as period is already inited
                 
                 return Utils.api("execute_method",
                 model="Event",
@@ -84,7 +84,7 @@ class EventPanelActive(Screen):
 
         elif event_status == 3: #between periods
 
-            if eval(coin_tosses_before_periods)[period_count] == "1": # not decreasing period count as period is already inited
+            if coin_tosses_before_periods[period_count] == 1: # not decreasing period count as period is already inited
                 
                 return Utils.api("execute_method",
                 model="Event",

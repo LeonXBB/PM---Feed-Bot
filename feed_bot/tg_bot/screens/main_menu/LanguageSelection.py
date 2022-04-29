@@ -8,13 +8,24 @@ class LanguageSelection(Screen):
     def __init__(self, via) -> None:
         super().__init__(via, "11", "LanguageSelection")
 
-    def get_keyboards(self):
+    def get_keyboards(self, data=None, via=None):
         
         layout = []
 
-        rv = Utils.api("get_all",
-        model="TextLanguage"
-        )
+        if via == "bot":
+
+            rv = Utils.api("get_all",
+            model="TextLanguage"
+            )
+
+        elif via == "server":
+    
+            from ...models import TextLanguage
+                
+            languages = TextLanguage.objects.all().order_by("id")
+            rv = []
+            for language in languages:
+                rv.append([language.id, language.self_name])
 
         for language in rv:
             layout.append(list())
