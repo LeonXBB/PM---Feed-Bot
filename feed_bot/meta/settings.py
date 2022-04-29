@@ -84,60 +84,7 @@ ASGI_APPLICATION = 'meta.asgi.application'
 DATABASE_ROUTERS = ('tg_bot.dbrouters.defaultFileScan', 'website.dbrouters.defaultFileScan')
 
 DATABASES = {
-    '''
-    'default': {
-        
-        'ENGINE': 'django.db.backends.postgresql_psycopg2',
-        'NAME': 'default',
-        'USER': config("postgres_user"),
-        'PASSWORD': config("postgres_password"),
-        'HOST': config("postgres_host"),
-        'PORT': config("postgres_port")
-    },
-    'logic': {
-
-        'ENGINE': 'django.db.backends.postgresql_psycopg2',
-        'NAME': 'logic',
-        'USER': config("postgres_user"),
-        'PASSWORD': config("postgres_password"),
-        'HOST': config("postgres_host"),
-        'PORT': config("postgres_port")
-
-    },
-
-    'localization': {
-
-        'ENGINE': 'django.db.backends.postgresql_psycopg2',
-        'NAME': 'localization',
-        'USER': config("postgres_user"),
-        'PASSWORD': config("postgres_password"),
-        'HOST': config("postgres_host"),
-        'PORT': config("postgres_port")
-
-    },
-
-    'telebot': {
-
-        'ENGINE': 'django.db.backends.postgresql_psycopg2',
-        'NAME': 'telebot',
-        'USER': config("postgres_user"),
-        'PASSWORD': config("postgres_password"),
-        'HOST': config("postgres_host"),
-        'PORT': config("postgres_port")
-
-    },
-
-    'website': {
-
-        'ENGINE': 'django.db.backends.postgresql_psycopg2',
-        'NAME': 'website',
-        'USER': config("postgres_user"),
-        'PASSWORD': config("postgres_password"),
-        'HOST': config("postgres_host"),
-        'PORT': config("postgres_port")
-    },
-    '''
-
+    
     'default': {
 
         'ENGINE': 'django.db.backends.postgresql_psycopg2',
