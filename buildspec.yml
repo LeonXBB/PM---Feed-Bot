@@ -13,7 +13,7 @@ phases:
     commands:
       - python main.py
       - aws ecr get-login-password --region eu-central-1 | docker login --username AWS --password-stdin 287269600687.dkr.ecr.eu-central-1.amazonaws.com
-      - docker build -t feed-bot
+      - docker build -t feed-bot .
       - docker tag feed-bot:latest 287269600687.dkr.ecr.eu-central-1.amazonaws.com/feed-bot:latest
   post_build:
     commands:
