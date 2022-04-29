@@ -41,6 +41,7 @@ class APIMessage(models.Model):
                 if point_id:
                     point = Point._get_({"id": int(point_id)})[0]
                     score[0 if point.team_id == event.home_team_id else 1] += point.value
+                    score[0 if point.team_id != event.home_team_id else 1] += point.opposite_value
         except:
             pass
 

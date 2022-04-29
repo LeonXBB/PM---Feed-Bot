@@ -20,10 +20,9 @@ class Utils:
             try:
                 rv = requests.post(f"{config('url_server_address')}/api{subdomain}", json={"task": task, **kwargs}).json()
                 done = True
-            except Exception as e: #TODO change to the specific type of an exception
-                #print(f"Exception {e} occured while making request to api, trying again...")
-                #time.sleep(float(config("server_request_sleep_period"))) #TODO change to logger
-                #done = True #TODO remove (see above)
+            except Exception as e:
+                with open("api_errors_log.txt", "w+", encoding="utf-8") as f:
+                    f.write(f"{time.time()}: {e}")
                 time.sleep(1)
 
         return rv
@@ -34,4 +33,7 @@ class Utils:
         from ..screens import all_screens
 
         for screen in all_screens:
-            screen(via)
+            try:
+                screen(via)
+            except Exception as e:
+                print(e)

@@ -6,7 +6,7 @@ from ..Screen import Screen
 
 class CoinTossPanel(Screen):
 
-    def get_keyboards(self):
+    def get_keyboards(self, data=None, via=None):
         
         left_team = {"text": self.strings[1][0], "data": "0_{}"}
         ball_control = {"text": self.strings[1][1], "data": "1_{}"}

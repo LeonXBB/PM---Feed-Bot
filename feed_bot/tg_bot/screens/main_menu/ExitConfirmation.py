@@ -8,7 +8,7 @@ class ExitConfirmation(Screen):
     def __init__(self, via) -> None:
         super().__init__(via, "12", "ExitConfirmation")
 
-    def get_keyboards(self):
+    def get_keyboards(self, data=None, via=None):
         
         yes = {"text": self.strings[1][0], "data": "0_0"}
         no = {"text": self.strings[1][1], "data": "1_0"}

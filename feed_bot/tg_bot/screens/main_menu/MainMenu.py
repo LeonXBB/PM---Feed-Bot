@@ -7,15 +7,13 @@ from ..Screen import Screen
 
 class MainMenu(Screen):
 
-    def get_keyboards(self, data=None):
+    def get_keyboards(self, data=None, via=None):
 
         new_event = {"text": self.strings[1][0], "data": "0_0"}
         event_list = {"text": self.strings[1][1], "data": "1_0"}
-        rules_set = {"text": self.strings[1][2], "data": "2_0"}
         language_edit = {"text": self.strings[1][3], "data": "3_0"}
         exit = {"text": self.strings[1][4], "data": "4_0"}
 
-        #layout = [(new_event,), (event_list,), (rules_set,), (language_edit,), (exit,)] #TODO return it 
         layout = [(new_event,), (event_list,), (language_edit,), (exit,)]
         return [layout, ]
 
