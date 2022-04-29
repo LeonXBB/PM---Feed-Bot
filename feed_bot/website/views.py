@@ -10,7 +10,7 @@ from django.views.decorators.csrf import csrf_exempt
 class Index(TemplateView):
 
     def get(self, request):
-        return render(request, "index/index.html", {"server_address": config("server_address")})
+        return render(request, "index/index.html", {"server_address": config("server_address")}, status=200)
     
     def post(self, request):
         pass
