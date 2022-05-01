@@ -271,6 +271,7 @@ class BotAPI(TemplateView):
 
         elif task == "kick_in":
 
+            '''
             def google_sheets_magic(sheet_type):
 
                 sleep_time = 1
@@ -395,8 +396,9 @@ class BotAPI(TemplateView):
             #localziation_sheet = google_sheets_magic("localization_table_name")
             #rules_sets_sheet = google_sheets_magic("rules_sets_schema_table_name")
             
-            #init_localization()
-            #init_rules_sets()
+            init_localization()
+            init_rules_sets()
+            '''
 
             Utils.init_screens("server")
 

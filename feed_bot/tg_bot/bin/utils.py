@@ -21,9 +21,8 @@ class Utils:
                 rv = requests.post(f"{config('url_server_address')}/api{subdomain}", json={"task": task, **kwargs}).json()
                 done = True
             except Exception as e:
-                with open("api_errors_log.txt", "w+", encoding="utf-8") as f:
-                    f.write(f"{time.time()}: {e}")
-                time.sleep(1)
+                print(e)
+                time.sleep(1) #TODO : make it configurable
 
         return rv
 
