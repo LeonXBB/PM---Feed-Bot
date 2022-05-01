@@ -13,9 +13,6 @@ from asgiref.sync import async_to_sync
 
 from decouple import config
 
-import gspread
-from oauth2client.service_account import ServiceAccountCredentials
-
 import time
 import datetime
 
