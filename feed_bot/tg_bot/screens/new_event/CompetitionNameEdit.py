@@ -4,8 +4,8 @@ from ..Screen import Screen
 
 class CompetitionNameEdit(Screen):
 
-    def __init__(self, via) -> None:
-        super().__init__(via, "27", "CompetitionNameEdit")
+    def __init__(self, via, bot_strings=None) -> None:
+        super().__init__(via, "27", "CompetitionNameEdit", bot_strings)
 
     def text(self, text, user_id):
 

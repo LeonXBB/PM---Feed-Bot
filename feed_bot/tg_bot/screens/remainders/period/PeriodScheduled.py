@@ -12,8 +12,8 @@ class PeriodScheduled(Remainder):
         
         return [layout, ]
 
-    def __init__(self, via) -> None:
-        super().__init__(via, "114", "PeriodScheduled")
+    def __init__(self, via, bot_strings=None) -> None:
+        super().__init__(via, "114", "PeriodScheduled", bot_strings)
 
     def button_1(self, params, user_id, scheduled_message_id):      
         

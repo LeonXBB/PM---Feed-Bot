@@ -14,8 +14,8 @@ class EventList(Screen):
         
         return [layout, ]
 
-    def __init__(self, via) -> None:
-        super().__init__(via, "40", "EventList")
+    def __init__(self, via, bot_strings=None) -> None:
+        super().__init__(via, "40", "EventList", bot_strings)
 
     def button_0(self, params, user_id):
         

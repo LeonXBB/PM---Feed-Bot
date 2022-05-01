@@ -295,8 +295,6 @@ class BotAPI(TemplateView):
                     
                     def init_text_language(language_index):
                         
-                        print('here', language_index)
-
                         new_obj = models.TextLanguage()
                         
                         sleep_time = 1
@@ -397,7 +395,9 @@ class BotAPI(TemplateView):
             init_rules_sets()
             '''
 
+            print("\n", time.strftime("%H:%M:%S"), "Starting screens init for the server...\n")
             Utils.init_screens("server")
+            print("\n", time.strftime("%H:%M:%S"), "Screens init for the server finished.\n")
 
             return JsonResponse([0, ], safe=False)
 

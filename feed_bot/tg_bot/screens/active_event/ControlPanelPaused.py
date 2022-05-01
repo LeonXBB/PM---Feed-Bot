@@ -17,9 +17,9 @@ class ControlPanelPaused(Screen):
 
         return [layout, ]
 
-    def __init__(self, via) -> None:
+    def __init__(self, via, bot_strings=None) -> None:
 
-        super().__init__(via, "31", "ControlPanelPaused")
+        super().__init__(via, "31", "ControlPanelPaused", bot_strings)
             
     def button_0(self, params, user_id): # resume
         

@@ -11,5 +11,5 @@ class EventEnded(Remainder):
 
         return [layout, ]
 
-    def __init__(self, via) -> None:
-        super().__init__(via, "105", "EventEnded")
+    def __init__(self, via, bot_strings=None) -> None:
+        super().__init__(via, "105", "EventEnded", bot_strings)

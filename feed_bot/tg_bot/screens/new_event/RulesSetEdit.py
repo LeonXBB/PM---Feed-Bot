@@ -23,7 +23,7 @@ class RulesSetEdit(Screen):
             all_rules_sets = []
             for rules_set in rules_sets:
                 all_rules_sets.append([rules_set.id, rules_set.name])
-       
+
         for rules_set in all_rules_sets:
             layout.append(({"text": [rules_set[1], rules_set[1], rules_set[1], rules_set[1], rules_set[1]], "data": f"0_{rules_set[0]}"},))
 
@@ -32,8 +32,8 @@ class RulesSetEdit(Screen):
 
         return [layout, ]
 
-    def __init__(self, via) -> None:
-        super().__init__(via, "26", "RulesSetEdit")
+    def __init__(self, via, bot_strings=None) -> None:
+        super().__init__(via, "26", "RulesSetEdit", bot_strings)
 
     def button_0(self, params, user_id):
 

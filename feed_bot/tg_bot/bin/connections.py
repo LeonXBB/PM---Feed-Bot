@@ -133,9 +133,9 @@ class PollingConnection(Connection):
 
     def run_schedule(self, parent): #TODO make schedule as separate "driver"
 
-        Utils.init_screens("bot") #TODO fix (we're initiating screens via bot twice)
+        Utils.init_screens("scheduling") #TODO fix (we're initiating screens via bot twice)
 
-        print("Schedule started")
+        print("\n", time.strftime("%H:%M:%S"), "Scheduling started")
 
         while True:
 

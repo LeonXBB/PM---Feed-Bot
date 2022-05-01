@@ -124,8 +124,8 @@ class ControlPanelActive(Screen):
 
         return [layout, ]
 
-    def __init__(self, via) -> None:
-        super().__init__(via, "30", "ControlPanelActive")
+    def __init__(self, via, bot_strings=None) -> None:
+        super().__init__(via, "30", "ControlPanelActive", bot_strings)
         delattr(self, "keyboards")
            
     def button_0(self, params, user_id): # cancel

@@ -4,8 +4,8 @@ from ..Screen import Screen
 
 class EventTimeEdit(Screen):
 
-    def __init__(self, via) -> None:
-        super().__init__(via, "25", "EventTimeEdit")
+    def __init__(self, via, bot_strings=None) -> None:
+        super().__init__(via, "25", "EventTimeEdit", bot_strings)
 
     def text(self, text, user_id):
         

@@ -3,6 +3,8 @@ from telebot.types import InlineKeyboardButton, InlineKeyboardMarkup
 
 from decouple import config
 
+import time
+
 from .connections import Connection
 from .utils import Utils
 from ..screens.Screen import Screen
@@ -17,10 +19,14 @@ class FeedBot(TeleBot):
 
     def run(self):
 
+        print("\n", time.strftime("%H:%M:%S"), "Starting the server...\n")
         Utils.api("kick_in")
+        print(time.strftime("%H:%M:%S"), "Server started.\n")
+        print(time.strftime("%H:%M:%S"), "Starting screens init for the bot...\n")
         Utils.init_screens("bot")
+        print("\n", time.strftime("%H:%M:%S"), "Screens init for the bot finished.\n")
 
-        print(f"Feed Bot running with connection {str(self.connection)}") #TODO change to logger
+        print(time.strftime("%H:%M:%S"), f"Feed Bot running with connection {str(self.connection)}\n") #TODO change to logger
         self.connection.run()
 
     def send(self, data): # user(tg_id, language_id), id(text, keyboard), __type__, formatters, dynamic button_values
@@ -228,3 +234,7 @@ class FeedBot(TeleBot):
                 params={"user_id": user_id, "epoch": screen_data[2], "content_type": "Remainder", "content_id": screen_data[0], "content_formatters": screen_data[3], "is_sent": 0, "is_active": 1, "group_name": screen_data[4], "content_callback": screen_data[5]},
                 fields=[]
                 )
+
+
+if __name__ == "__main__":
+    FeedBot().run()

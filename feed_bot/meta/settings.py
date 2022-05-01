@@ -98,10 +98,70 @@ DATABASES = {
         'HOST': config("postgres_host"),
 
         'PORT': config("postgres_port")
-    },
-    
+    }
 }
+'''
+    'localization': {
 
+        'ENGINE': 'django.db.backends.postgresql_psycopg2',
+
+        'NAME': 'localization',
+
+        'USER': config("postgres_user"),
+
+        'PASSWORD': config("postgres_password"),
+
+        'HOST': config("postgres_host"),
+
+        'PORT': config("postgres_port")
+    },
+
+    'logic': {
+
+        'ENGINE': 'django.db.backends.postgresql_psycopg2',
+
+        'NAME': 'logic',
+
+        'USER': config("postgres_user"),
+
+        'PASSWORD': config("postgres_password"),
+
+        'HOST': config("postgres_host"),
+
+        'PORT': config("postgres_port")
+    },
+
+    'telebot': {
+
+        'ENGINE': 'django.db.backends.postgresql_psycopg2',
+
+        'NAME': 'telebot',
+
+        'USER': config("postgres_user"),
+
+        'PASSWORD': config("postgres_password"),
+
+        'HOST': config("postgres_host"),
+
+        'PORT': config("postgres_port")
+    },
+
+    'website': {
+
+        'ENGINE': 'django.db.backends.postgresql_psycopg2',
+
+        'NAME': 'website',
+
+        'USER': config("postgres_user"),
+
+        'PASSWORD': config("postgres_password"),
+
+        'HOST': config("postgres_host"),
+
+        'PORT': config("postgres_port")
+    }
+}
+'''
 
 # Password validation
 # https://docs.djangoproject.com/en/4.0/ref/settings/#auth-password-validators

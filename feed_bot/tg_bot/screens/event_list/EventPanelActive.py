@@ -13,8 +13,8 @@ class EventPanelActive(Screen):
     
             return [layout, ]
 
-    def __init__(self, via) -> None:
-        super().__init__(via, "43", "EventPanelActive")
+    def __init__(self, via, bot_strings=None) -> None:
+        super().__init__(via, "43", "EventPanelActive", bot_strings)
 
     def button_0(self, params, user_id):
         

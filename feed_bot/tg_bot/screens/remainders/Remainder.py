@@ -16,9 +16,9 @@ class Remainder(Screen):
             if ((remainder.remainder_id == remainder_id or remainder_id is None) and (remainder.screen_id == screen_id or screen_id is None) and (remainder.remainder_name == name or name is None)): 
                 return remainder
 
-    def __init__(self, via, screen_id="-1", remainder_name="") -> None:
+    def __init__(self, via, screen_id="-1", remainder_name="", bot_strings=None) -> None:
         
-        super().__init__(via, screen_id, remainder_name)
+        super().__init__(via, screen_id, remainder_name, bot_strings)
 
         self.remainder_id = str(int(screen_id) - 100) if len(str(int(screen_id) - 100)) > 1 else f"0{str(int(screen_id) - 100)}"
         self.remainder_name = remainder_name
