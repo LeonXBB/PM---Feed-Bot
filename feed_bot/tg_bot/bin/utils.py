@@ -18,7 +18,7 @@ class Utils:
         done = False
         while not done:
             try:
-                rv = requests.post(f"{config('url_server_address')}/api{subdomain}", json={"task": task, **kwargs}).json()
+                rv = requests.post(f"{config('output_protocol')}://{config('output_address')}/api{subdomain}", json={"task": task, **kwargs}).json()
                 done = True
             except Exception as e:
                 time.sleep(1) #TODO : make it configurable
