@@ -8,8 +8,8 @@ RUN pip3 install -r requirements.txt
 
 COPY . .
 
-ENV PORT=80
-EXPOSE 80
+ENV PORT=8000
+EXPOSE 8000
 
 CMD [ "python3", "-m" , "main"]
 
