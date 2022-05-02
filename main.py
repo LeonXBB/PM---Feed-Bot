@@ -1,4 +1,3 @@
-from email.policy import default
 import multiprocess as mp
 
 from decouple import config
