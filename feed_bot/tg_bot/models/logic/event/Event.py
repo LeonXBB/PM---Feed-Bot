@@ -59,7 +59,7 @@ class Event(LogicModel):  #TODO move template to different class?
             return new_event.id
 
     def show_template(self): #TODO JSON
-
+        
         from ..Team import Team
         from ..Competition import Competition
         from ..RulesSet import RulesSet
@@ -175,7 +175,7 @@ class Event(LogicModel):  #TODO move template to different class?
         for point_type in rules_set.scores_names:
             points_by_type_by_period.append(list())
 
-        for period_id in self.periods_ids:
+        for period_id in self.periods_ids.split(";"):
             if period_id:
 
                 time_outs_all.append([0, 0])
@@ -651,7 +651,7 @@ class Event(LogicModel):  #TODO move template to different class?
                     
                     rv.extend(Remainder._get_("CoinTossHappens").schedule(when, self.admin_id, [[self.id, home_team_name, away_team_name] ,], f"event_{self.id}_coin_toss_{coin_toss_count}", [[self.id, self.id], ]))
 
-                    for offset in rules_set.coin_toss_remainder_minutes_before[coin_toss_count - 1]:
+                    for offset in rules_set.coin_toss_remainder_minutes_before[coin_toss_count]:
                         if offset:
                             rv.extend(Remainder._get_("CoinTossAboutToHappen").schedule(when - int(offset) * 60, self.admin_id, [[self.id, home_team_name, away_team_name, offset] ,], f"event_{self.id}_coin_toss_{coin_toss_count}", [[self.id, self.id], ]))
             

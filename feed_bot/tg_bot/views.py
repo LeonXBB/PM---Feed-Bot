@@ -430,7 +430,7 @@ class BotLogicAPI(TemplateView): # TODO
 
                 old_val = data["old_val"]
                 new_val = data["new_val"]
-                                
+
                 if data["attr"] == "home_team":
                     try: #TODO change to check if team exists
                         old_val = getattr(models, "Team")._get_({"id": data["old_val"]})[0].name
@@ -466,6 +466,8 @@ class BotLogicAPI(TemplateView): # TODO
                     new_val = getattr(models, "RulesSet")._get_({"id": data["new_val"]})[0].name
 
                 return old_val, new_val
+
+            event = Event.objects.get(id=data["event_id"])
 
             old_val, new_val = get_verbose_vals()
 
@@ -579,6 +581,8 @@ class BotLogicAPI(TemplateView): # TODO
 
         elif task == "coin_toss_edited":
 
+            event = Event._get_({'id': data["event_id"]})[0]
+
             attr = "Команда зліва" if data["attr"] == "left_team_id" else "Команда, що починає"
             val = data["val"]
 
@@ -619,15 +623,21 @@ class BotLogicAPI(TemplateView): # TODO
             team_name = Team._get_({"id": data["team_id"]})[0].name
             point_type_name = RulesSet._get_({"id": event.rules_set_id})[0].scores_names[data["point_type"]]
 
-            async_to_sync(self.channel_layer.group_send)(
-                f'event_data_{event.id}',
-                {"type": "update.scores", "content_team": 0 if data["team_id"] == event.home_team_id else 1, "content_period": data["period_count"]-1, "content_value": data["point_value"], "content_opposite_value": data["opposite_point_value"], "content_score": data["new_team_score"], "content_opposite_score": data["new_opposite_team_score"]}
-            )
+            try:
+                async_to_sync(self.channel_layer.group_send)(
+                    f'event_data_{event.id}',
+                    {"type": "update.scores", "content_team": 0 if data["team_id"] == event.home_team_id else 1, "content_period": data["period_count"]-1, "content_value": data["point_value"], "content_opposite_value": data["opposite_point_value"], "content_score": data["new_team_score"], "content_opposite_score": data["new_opposite_team_score"]}
+                )
+            except Exception as e:
+                print(e)
 
-            string = f"Зміна рахунку команди {team_name}. Тип: {point_type_name}, вага: {data['point_value']}, вага протилежної команди: {data['opposite_point_value']}, нове значення рахунку: {data['new_team_score']}, протилежної команди: {data['opposite_team_score']}"
-            mess = APIMessage()
-            mess.add(event.id, string)
-            mess.send()
+            try:
+                string = f"Зміна рахунку команди {team_name}. Тип: {point_type_name}, вага: {data['point_value']}, вага протилежної команди: {data['opposite_point_value']}, нове значення рахунку: {data['new_team_score']}, протилежної команди: {data['new_opposite_team_score']}"
+                mess = APIMessage()
+                mess.add(event.id, string)
+                mess.send()
+            except Exception as e:
+                print(e)
 
         elif task == "point_cancelled":
             pass
