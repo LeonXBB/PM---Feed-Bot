@@ -194,14 +194,12 @@ class Event(LogicModel):  #TODO move template to different class?
                             point = Point._get_({"id": int(point_id)})[0]
                             if point.type == i:
                                 if point.team_id == current_period.left_team_id:
-                                    points_by_type_by_period[i][-1][0] += point.value
+                                    points_by_type_by_period[i][-1][0] += 1
                                     sum_points_by_period[-1][0] += point.value
-                                    points_by_type_by_period[i][-1][1] += point.opposite_value
                                     sum_points_by_period[-1][1] += point.opposite_value
                                 else:
-                                    points_by_type_by_period[i][-1][1] += point.value
+                                    points_by_type_by_period[i][-1][1] += 1
                                     sum_points_by_period[-1][1] += point.value
-                                    points_by_type_by_period[i][-1][0] += point.opposite_value
                                     sum_points_by_period[-1][0] += point.opposite_value
 
                 if period.status == 2:

@@ -623,21 +623,15 @@ class BotLogicAPI(TemplateView): # TODO
             team_name = Team._get_({"id": data["team_id"]})[0].name
             point_type_name = RulesSet._get_({"id": event.rules_set_id})[0].scores_names[data["point_type"]]
 
-            try:
-                async_to_sync(self.channel_layer.group_send)(
-                    f'event_data_{event.id}',
-                    {"type": "update.scores", "content_team": 0 if data["team_id"] == event.home_team_id else 1, "content_period": data["period_count"]-1, "content_value": data["point_value"], "content_opposite_value": data["opposite_point_value"], "content_score": data["new_team_score"], "content_opposite_score": data["new_opposite_team_score"]}
-                )
-            except Exception as e:
-                print(e)
+            async_to_sync(self.channel_layer.group_send)(
+                f'event_data_{event.id}',
+                {"type": "update.scores", "content_team": 0 if data["team_id"] == event.home_team_id else 1, "content_period": data["period_count"]-1, "content_value": data["point_value"], "content_opposite_value": data["opposite_point_value"], "content_score": data["new_team_score"], "content_opposite_score": data["new_opposite_team_score"]}
+            )
 
-            try:
-                string = f"Зміна рахунку команди {team_name}. Тип: {point_type_name}, вага: {data['point_value']}, вага протилежної команди: {data['opposite_point_value']}, нове значення рахунку: {data['new_team_score']}, протилежної команди: {data['new_opposite_team_score']}"
-                mess = APIMessage()
-                mess.add(event.id, string)
-                mess.send()
-            except Exception as e:
-                print(e)
+            string = f"Зміна рахунку команди {team_name}. Тип: {point_type_name}, вага: {data['point_value']}, вага протилежної команди: {data['opposite_point_value']}, нове значення рахунку: {data['new_team_score']}, протилежної команди: {data['new_opposite_team_score']}"
+            mess = APIMessage()
+            mess.add(event.id, string)
+            mess.send()
 
         elif task == "point_cancelled":
             pass

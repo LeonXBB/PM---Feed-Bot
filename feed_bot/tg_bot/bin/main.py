@@ -31,6 +31,7 @@ class FeedBot(TeleBot):
 
     def send(self, data): # user(tg_id, language_id), id(text, keyboard), __type__, formatters, dynamic button_values
        
+        print(time.strftime("%H:%M:%S"), "Calculating obj reference...")
         obj = None
         if data[2] == "screen":
             obj = Screen._get_(id=data[1])        
@@ -40,7 +41,10 @@ class FeedBot(TeleBot):
         user_tg_id = data[0][0]
         user_language_id = data[0][1]
         
+        print(time.strftime("%H:%M:%S"), "Obj reference сalculated. Getting messages count...")
         messages_count = len(list(obj.strings.keys() if hasattr(obj, "strings") else obj.get_strings(data))) - len(obj.keyboards if hasattr(obj, "keyboards") else obj.get_keyboards(data))
+
+        print(time.strftime("%H:%M:%S"), "Messages count got. Parsing keyboard(s)...")
 
         texts = []
 
@@ -65,15 +69,21 @@ class FeedBot(TeleBot):
 
         rv = []
 
+        print(time.strftime("%H:%M:%S"), "Keyboard(s) parsed. Parsing text strings...")
+
         for i in range(messages_count):
            
             text_dict_index = obj.strings[i] if hasattr(obj, "strings") else obj.get_strings(data)[i]
             text = text_dict_index[0][user_language_id]
             texts.append(text)
 
+            print(time.strftime("%H:%M:%S"), f"Text strings for message {i} parsed. Parsing formatters...")
+
             formatters = data[3][i] if type(data[3]) is list and len(data[3]) > i and data[3][i] is not None else list() 
             text = texts[i].format(*formatters)
             keyboard = None if len (keyboards) <= i else keyboards[i]
+
+            print(time.strftime("%H:%M:%S"), f"Formatters for message {i} parsed. Sending message...")
 
             rv.append(self.connection._output_(user_tg_id, (text, keyboard)))
 
@@ -81,11 +91,15 @@ class FeedBot(TeleBot):
 
     def receive(self, message):
         
+        print("\n", time.strftime("%H:%M:%S"), "Received message from user. Getting their info...")
+
         user_id, user_language_id, user_current_screen_code = Utils.api("get_or_make", 
             model="BotUser", 
             fields=["id", "language_id", "current_screen_code"],
             params={"tg_id": message["user_id"]},
         )[0]
+
+        print(time.strftime("%H:%M:%S"), "Got user info. Calculating reply...")
 
         reply = None
 
@@ -163,14 +177,20 @@ class FeedBot(TeleBot):
             method={"name": "receive_button_press_from", "params": [button_id, params, "screen", screen_id]}
             )
 
+        print(time.strftime("%H:%M:%S"), "Calculated reply to user message.")
+
         if message["mess_type"] != "button": 
             self.connection._add_(user_id, "user_input_messages_ids", user_current_screen_code, message["mess_id"])
             self.connection._delete_(user_id, "user_input_messages_ids", f"int(k) == int({user_current_screen_code})")
 
         if reply is not None and hasattr(reply, "__len__") and len(reply) > 0 and reply[0] is not None:
+            print(time.strftime("%H:%M:%S"), "Sending reply to user...")
             self.process_received(message, reply)
+            print(time.strftime("%H:%M:%S"), "Reply sent.\n")
 
     def process_received(self, message, reply):
+
+        print(time.strftime("%H:%M:%S"), "Updating user info (if changed in reply)...")
 
         user_id, user_language_id, = Utils.api("get", 
             model="BotUser", 
@@ -178,9 +198,12 @@ class FeedBot(TeleBot):
             params={"tg_id": message["user_id"]}
         )[0]
 
+        print(time.strftime("%H:%M:%S"), "User info updated.")
+
         if type(reply) is list and len(reply) > 0 and type(reply[0]) is list and len(reply[0]) > 0 and type(reply[0][0]) is list:
             reply = reply[0] # TODO fix this hack for when we have remainders, as api.execute_method adds its own list 
 
+        print(time.strftime("%H:%M:%S"), "Calculating screens to delete / save...")
         screens_ids = []
         ignore_ids = []
         add_ids = []
@@ -193,19 +216,23 @@ class FeedBot(TeleBot):
         for screen_data in reply:
             if int(screen_data[0]) not in ignore_ids: screens_ids.append(screen_data[0])
 
+        print(time.strftime("%H:%M:%S"), "Screens to delete / save calculated. Deleting calculated screens...")
         for i, screen_data in enumerate(reply):
             if screen_data[1] == "screen" and len(reply) > 1:
             
                 # delete previous screens for complicated menus
                 self.connection._delete_(user_id, "screen_messages_ids", f"str(k) not in {screens_ids}")  
+        print(time.strftime("%H:%M:%S"), "Calculated screens deleted.")
 
         for i, screen_data in enumerate(reply):
-
+            print(time.strftime("%H:%M:%S"), f"Processing screen {i} of {len(reply)}...")
             if screen_data[1] != "remainder":
-
+                print(time.strftime("%H:%M:%S"), "Formatting screen data...")
                 # show next screen
                 screen_data.insert(0, [message["user_id"], user_language_id])
+                print(time.strftime("%H:%M:%S"), "Screen data formatted. Sending screen...")
                 new_messages_ids = self.send(screen_data)
+                print(time.strftime("%H:%M:%S"), "Screen sent. Updating messages ids...")
 
                 if screen_data[2] == "screen":
 
@@ -228,13 +255,13 @@ class FeedBot(TeleBot):
                     )
 
             else:
-                
+                print(time.strftime("%H:%M:%S"), "Saving remainder...")
                 Utils.api("get_or_make",
                 model="ScheduledMessage",
                 params={"user_id": user_id, "epoch": screen_data[2], "content_type": "Remainder", "content_id": screen_data[0], "content_formatters": screen_data[3], "is_sent": 0, "is_active": 1, "group_name": screen_data[4], "content_callback": screen_data[5]},
                 fields=[]
                 )
-
+                print(time.strftime("%H:%M:%S"), "Remainder saved.")
 
 if __name__ == "__main__":
     FeedBot().run()

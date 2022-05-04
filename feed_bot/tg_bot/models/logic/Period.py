@@ -89,10 +89,7 @@ class Period(LogicModel):
         event.periods_ids = event.periods_ids + f"{self.id};"
         event.save()
 
-        try:
-            rv = [admin.show_screen_to("10", [[config("telebot_version")], ], ), *self.run()]
-        except Exception as e:
-            print(e)
+        rv = [admin.show_screen_to("10", [[config("telebot_version")], ], ), *self.run()]
             
         Utils.api("period_scheduled", "logic", period_id=self.id, period_epoch=int(self.start_scheduled_epoch), period_count=periods_count, event_id=self.event_id)
 
@@ -142,7 +139,7 @@ class Period(LogicModel):
         rules_set = RulesSet._get_({"id": event.rules_set_id})[0]
         period_count = len(Period._get_({"event_id": self.event_id}))
 
-        if rules_set.timers_stop_at_pauses == 1: #TODO add for event timers as well
+        if rules_set.period_timers_stop_at_pauses[period_count - 1] == 1: #TODO add for event timers as well
             Remainder.unschedule(f"period_{period_count}_event_{self.event_id}_end")
         
         Utils.api("period_paused", "logic", event_id=self.event_id, period_count=period_count, period_id=self.id)
@@ -160,7 +157,7 @@ class Period(LogicModel):
         rules_set = RulesSet._get_({"id": event.rules_set_id})[0]
         period_count = len(Period._get_({"event_id": self.event_id}))
 
-        if rules_set.timers_stop_at_pauses == 1:
+        if rules_set.period_timers_stop_at_pauses[period_count - 1] == 1:
             Remainder.reschedule(f"period_{period_count}_event_{self.event_id}_end")
 
         Utils.api("period_resumed", "logic", event_id=self.event_id, period_count=period_count, period_id=self.id)
@@ -214,8 +211,8 @@ class Period(LogicModel):
         for point_id in self.points_ids.split(";"):
             if point_id:
                 point = Point._get_({"id": int(point_id)})[0]
-                score[point.team_id != self.left_team_id] += point.value
-                score[point.team_id == self.left_team_id] += point.opposite_value
+                score[0 if int(point.team_id) == int(self.left_team_id) else 1] += point.value
+                score[1 if int(point.team_id) == int(self.left_team_id) else 0] += point.opposite_value
 
         def tto_now(): #TODO move to utils
             
@@ -388,9 +385,6 @@ class Period(LogicModel):
             
             def check_ball_possession_change():    
                 
-                print(data)
-                print(self.ball_possesion_team_id, point_.team_id)
-
                 if rules_set.ball_control_after_score_per_score[int(data[2])] == 0 and int(self.ball_possesion_team_id) != int(point_.team_id):
                     self.ball_possesion_team_id = self.left_team_id if data[1] == "0" else self.right_team_id
                     Utils.api("ball_possesion_changed", "logic", event_id=self.event_id, period_count=period_count, period_id=self.id, possession_index=int(data[1]))
@@ -406,27 +400,21 @@ class Period(LogicModel):
                     self.pause()
                     rv.extend(event.show_paused_match_template(self.id))
 
-            try:
-                
-                point_ = Point()
-                point_.happen(self.event_id, self.id, self.left_team_id if data[1] == "0" else self.right_team_id, f"{score[0]}:{score[1]}", data[2])            
-                point_.value = rules_set.points_per_period_per_score_per_team[period_count-1][int(data[2])][point_.team_id != self.left_team_id]
-                point_.opposite_value = rules_set.points_per_period_per_score_per_team[period_count-1][int(data[2])][point_.team_id == self.left_team_id]
-                point_.save()
+            point_ = Point()
+            point_.happen(self.event_id, self.id, self.left_team_id if data[1] == "0" else self.right_team_id, f"{score[0]}:{score[1]}", data[2])            
+            point_.value = rules_set.points_per_period_per_score_per_team[period_count-1][int(data[2])][0]
+            point_.opposite_value = rules_set.points_per_period_per_score_per_team[period_count-1][int(data[2])][1]
+            point_.save()
 
-                score[int(data[1])] += int(point_.value)
-                score[data[1] == "0"] += int(point_.opposite_value)
-            
-                check_ball_possession_change()
-                check_event_pause()
+            score[1 if data[1] == "0" else 0] += int(point_.opposite_value)
+        
+            check_ball_possession_change()
+            check_event_pause()
 
-                Utils.api("point_happened", "logic", event_id=self.event_id, period_count=period_count, period_id=self.id, team_id=point_.team_id, point_type=int(data[2]), point_value=point_.value, opposite_point_value=point_.opposite_value, new_team_score=score[int(data[1])], new_opposite_team_score=score[int(data[1]) == "0"])
+            Utils.api("point_happened", "logic", event_id=self.event_id, period_count=period_count, period_id=self.id, team_id=point_.team_id, point_type=int(data[2]), point_value=point_.value, opposite_point_value=point_.opposite_value, new_team_score=score[int(data[1])], new_opposite_team_score=score[int(data[1]) == "0"])
 
-                self.points_ids = f"{self.points_ids}{point_.id};" #TODO figure out why this is not working inside happen function and make consistant
-                self.save()
-
-            except Exception as e:
-                print(e)
+            self.points_ids = f"{self.points_ids}{point_.id};" #TODO figure out why this is not working inside happen function and make consistant
+            self.save()
 
         check_remainders()
 
@@ -437,18 +425,23 @@ class Period(LogicModel):
 
         if check_pause_resume():
             
-            if self.is_paused == 0:
+            try:
+
+                if self.is_paused == 0:
+                    
+                    self.pause()
+                    
+                    rv.extend(event.show_paused_match_template(self.id))
                 
-                self.pause()
-                
-                rv.extend(event.show_paused_match_template(self.id))
-               
-            else:
-                
-                self.resume()
-                
-                rv.extend(event.show_match_template(self.id))
-                
+                else:
+                    
+                    self.resume()
+                    
+                    rv.extend(event.show_match_template(self.id))
+
+            except Exception as e:
+                print(e)
+
         if check_side_change():
 
             side_change_ = SideChange()
