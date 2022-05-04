@@ -1,5 +1,7 @@
 from decouple import config
 
+import time
+
 from ...bin.utils import Utils
 from ..Screen import Screen
 
@@ -64,15 +66,20 @@ class ControlPanelActive(Screen):
             return rv
         
         def get_time_out_buttons():
-            
+
             rv = []
 
             def get_time_out_count(team_side_index):
-                return len(Utils.api("get",
-                model="TimeOut",
-                params={"event_id": event_id, "period_id": period_id, "team_id": [left_team_id, right_team_id][team_side_index], "is_technical": 0},
-                fields=["id",]
-                ))
+                
+                from ...models import TimeOut
+
+                return len(TimeOut._get_({"event_id": event_id, "period_id": period_id, "team_id": [left_team_id, right_team_id][team_side_index], "is_technical": 0}))
+
+                #return len(Utils.api("get",
+                #model="TimeOut",
+                #params={"event_id": event_id, "period_id": period_id, "team_id": [left_team_id, right_team_id][team_side_index], "is_technical": 0},
+                #fields=["id",]
+                #))
 
             def get_time_out_button(team_side_index, active):
                 return {"text": self.strings[1][active + 3], "data": f"4_{team_side_index}_{active}" + "_{}"}
@@ -101,19 +108,43 @@ class ControlPanelActive(Screen):
         if data is None:
             return super().get_keyboards()
 
+        print(time.strftime("%H:%M:%S"), "Getting keyboards for active event screen, 0 / 10")
+
         ball_string = get_ball_string()
  
+        print(time.strftime("%H:%M:%S"), "Getting keyboards for active event screen, 1 / 10")
+
         period_id, left_team_id, right_team_id, ball_possesion_team_id, event_id = get_period_data()
+
+        print(time.strftime("%H:%M:%S"), "Getting keyboards for active event screen, 2 / 10")
+
         rules_set_id = get_event_data()
 
+        print(time.strftime("%H:%M:%S"), "Getting keyboards for active event screen, 3 / 10")
+
         period_count = get_period_count()
-           
+
+        print(time.strftime("%H:%M:%S"), "Getting keyboards for active event screen, 4 / 10")
+
         scores_names, actions_list = get_rules()
 
+        print(time.strftime("%H:%M:%S"), "Getting keyboards for active event screen, 5 / 10")
+
         header = [get_head_row_button(i) for i in range(3)]
+
+        print(time.strftime("%H:%M:%S"), "Getting keyboards for active event screen, 6 / 10")
+
         if (res:= get_point_buttons()) is not None: points = [*res]
+
+        print(time.strftime("%H:%M:%S"), "Getting keyboards for active event screen, 7 / 10")
+
         time_outs = get_time_out_buttons()
+
+        print(time.strftime("%H:%M:%S"), "Getting keyboards for active event screen, 8 / 10")
+
         if (res:= get_action_buttons()) is not None: actions = [*res]
+
+        print(time.strftime("%H:%M:%S"), "Getting keyboards for active event screen, 9 / 10")
 
         cancel = {"text": self.strings[1][0], "data": "0_{}"}
         go_back = {"text": self.strings[1][1], "data": "1_{}"}
@@ -121,6 +152,8 @@ class ControlPanelActive(Screen):
         controls = (cancel, go_back)
 
         layout = [row for row in [header, *points, time_outs, *actions, controls] if row is not None and len(row) > 0]
+
+        print(time.strftime("%H:%M:%S"), "Getting keyboards for active event screen, 10 / 10")
 
         return [layout, ]
 
@@ -165,13 +198,21 @@ class ControlPanelActive(Screen):
 
     def button_3(self, params, user_id): # point type
         
+        from ...models import Period
+
+        print(time.strftime("%H:%M:%S"), "New point. Getting params...")
+
         team, score_type, period_id = params
 
-        return Utils.api("execute_method",
-        model="Period",
-        params={"id": int(period_id)},
-        method={"name": "run", "params": [f"point_{team}_{score_type}", ]}
-        )[0]
+        print(time.strftime("%H:%M:%S"), "Got params. Calling manager function...")
+
+        return Period._get_({"id": int(period_id)})[0].run(f"point_{team}_{score_type}")
+        
+        #return Utils.api("execute_method",
+        #model="Period",
+        #params={"id": int(period_id)},
+        #method={"name": "run", "params": [f"point_{team}_{score_type}", ]}
+        #)[0]
 
     def button_4(self, params, user_id): # time out
         

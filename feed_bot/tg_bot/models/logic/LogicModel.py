@@ -8,6 +8,15 @@ class LogicModel(models.Model):
 
         rv = []
 
+        for k, v in params.items():
+            if len(rv) == 0: rv = cls.objects.filter(**{k: v})
+            else: rv = rv.filter(**{k: v}) 
+        
+        return rv
+        
+        '''
+        rv = []
+
         for obj in cls.objects.all():
             
             true = True
@@ -18,6 +27,7 @@ class LogicModel(models.Model):
             if true: rv.append(obj)
 
         return rv
+        '''
 
     created = models.CharField(max_length=5096, default=f"{{}}") # "by": user_id, "at": timestamp
     status = models.IntegerField(default=0)

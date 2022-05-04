@@ -1,3 +1,4 @@
+from attr import has
 from telebot import TeleBot
 from telebot.types import InlineKeyboardButton, InlineKeyboardMarkup
 
@@ -42,13 +43,25 @@ class FeedBot(TeleBot):
         user_language_id = data[0][1]
         
         print(time.strftime("%H:%M:%S"), "Obj reference сalculated. Getting messages count...")
-        messages_count = len(list(obj.strings.keys() if hasattr(obj, "strings") else obj.get_strings(data))) - len(obj.keyboards if hasattr(obj, "keyboards") else obj.get_keyboards(data))
+        if hasattr(obj, "strings"):
+            strings = obj.strings
+        else:
+            strings = obj.get_strings(data)
+        messages_count = len(strings)
+
+        if hasattr(obj, "keyboards"):
+            keyboard_layouts = obj.keyboards
+        else:
+            keyboard_layouts = obj.get_keyboards(data)
+        messages_count -= len(keyboard_layouts)
+        
+        #messages_count = len(list(obj.strings.keys() if hasattr(obj, "strings") else obj.get_strings(data))) - len(obj.keyboards if hasattr(obj, "keyboards") else obj.get_keyboards(data))
 
         print(time.strftime("%H:%M:%S"), "Messages count got. Parsing keyboard(s)...")
 
         texts = []
 
-        layouts = obj.keyboards if hasattr(obj, "keyboards") else obj.get_keyboards(data)
+        layouts = keyboard_layouts
         keyboards = []
 
         for layout in layouts:
@@ -73,7 +86,7 @@ class FeedBot(TeleBot):
 
         for i in range(messages_count):
            
-            text_dict_index = obj.strings[i] if hasattr(obj, "strings") else obj.get_strings(data)[i]
+            text_dict_index = strings[i]
             text = text_dict_index[0][user_language_id]
             texts.append(text)
 

@@ -2,6 +2,8 @@ from decouple import config
 
 from django.db import models
 
+import time
+
 from ...screens.Screen import Screen
 from ...screens.remainders.Remainder import Remainder
 
@@ -62,18 +64,27 @@ class BotUser(models.Model):
 
     def receive_button_press_from(self, button_id, params, screen_type, screen_id="", scheduled_message_id=None):
         
+        print(time.strftime("%H:%M:%S"), "Checking authorization status...")
+            
         if not self.check_authorization():
             return self.show_screen_to("00")       
         
+        print(time.strftime("%H:%M:%S"), "Authorization status checked. Getting reference obj...")
+
         if screen_type == "screen":
             
             screen = Screen._get_(id=self.current_screen_code if screen_id == "" else str(screen_id))
+
+            print(time.strftime("%H:%M:%S"), "Reference obj obtained. Processing request...")
 
             return None if not hasattr(screen, f"button_{button_id}") else getattr(screen, f"button_{button_id}")(params, self.id)
 
         elif screen_type == "remainder":
 
             screen = Remainder._get_(remainder_id=str(screen_id))
+
+            print(time.strftime("%H:%M:%S"), "Reference obj obtained. Processing request...")
+
             return None if not hasattr(screen, f"button_{button_id}") else getattr(screen, f"button_{button_id}")(params, self.id, scheduled_message_id)
 
     def show_screen_to(self, screen_id, format_strs=None, callback_data=None):
