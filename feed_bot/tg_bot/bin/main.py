@@ -1,4 +1,3 @@
-from attr import has
 from telebot import TeleBot
 from telebot.types import InlineKeyboardButton, InlineKeyboardMarkup
 
@@ -112,6 +111,19 @@ class FeedBot(TeleBot):
             params={"tg_id": message["user_id"]},
         )[0]
 
+        while Utils.api("get", 
+        model="BotUser",
+        fields=["blocked_for_new_requests"],
+        params={"id": user_id},
+        )[0] == 1:
+            time.sleep(1) #TODO make it configurable
+
+        Utils.api("update", 
+            model="BotUser",
+            filter_params={"id": user_id},
+            update_params={"blocked_for_new_requests": 1},
+        )
+
         print(time.strftime("%H:%M:%S"), "Got user info. Calculating reply...")
 
         reply = None
@@ -192,6 +204,12 @@ class FeedBot(TeleBot):
 
         print(time.strftime("%H:%M:%S"), "Calculated reply to user message.")
 
+        Utils.api("update", 
+        model="BotUser",
+        filter_params={"id": user_id},
+        update_params={"blocked_for_new_requests": 0},
+        )
+
         if message["mess_type"] != "button": 
             self.connection._add_(user_id, "user_input_messages_ids", user_current_screen_code, message["mess_id"])
             self.connection._delete_(user_id, "user_input_messages_ids", f"int(k) == int({user_current_screen_code})")
@@ -247,6 +265,8 @@ class FeedBot(TeleBot):
                 new_messages_ids = self.send(screen_data)
                 print(time.strftime("%H:%M:%S"), "Screen sent. Updating messages ids...")
 
+                print(screen_data)
+
                 if screen_data[2] == "screen":
 
                     # delete previous screens
@@ -258,14 +278,17 @@ class FeedBot(TeleBot):
                     
                 elif screen_data[2] == "scheduled":
                     
-                    for new_message_id in new_messages_ids:
-                        self.connection._add_(user_id, "remainders_ids", screen_data[1], new_message_id)
+                    try:
+                        for new_message_id in new_messages_ids:
+                            self.connection._add_(user_id, "remainders_ids", screen_data[1], new_message_id)
 
-                    Utils.api("update",
-                    model="ScheduledMessage",
-                    filter_params={"id": screen_data[5]},
-                    update_params={"messages_ids": ";".join(str(x) for x in new_messages_ids)}
-                    )
+                        Utils.api("update",
+                        model="ScheduledMessage",
+                        filter_params={"id": screen_data[5]},
+                        update_params={"messages_ids": ";".join(str(x) for x in new_messages_ids)}
+                        )
+                    except Exception as e:
+                        print(e)
 
             else:
                 print(time.strftime("%H:%M:%S"), "Saving remainder...")
@@ -275,6 +298,3 @@ class FeedBot(TeleBot):
                 fields=[]
                 )
                 print(time.strftime("%H:%M:%S"), "Remainder saved.")
-
-if __name__ == "__main__":
-    FeedBot().run()

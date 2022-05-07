@@ -23,6 +23,8 @@ class BotUser(models.Model):
     remainders_ids = models.CharField(max_length=5096, default=f"{{}}")
     user_input_messages_ids = models.CharField(max_length=5096, default=f"{{}}")
 
+    blocked_for_new_requests = models.IntegerField(default=0)
+
     @classmethod
     def _get_(cls, params):
 
@@ -76,8 +78,11 @@ class BotUser(models.Model):
             screen = Screen._get_(id=self.current_screen_code if screen_id == "" else str(screen_id))
 
             print(time.strftime("%H:%M:%S"), "Reference obj obtained. Processing request...")
-
-            return None if not hasattr(screen, f"button_{button_id}") else getattr(screen, f"button_{button_id}")(params, self.id)
+            
+            try:
+                return None if not hasattr(screen, f"button_{button_id}") else getattr(screen, f"button_{button_id}")(params, self.id)
+            except Exception as e:
+                print(e)
 
         elif screen_type == "remainder":
 
@@ -85,7 +90,10 @@ class BotUser(models.Model):
 
             print(time.strftime("%H:%M:%S"), "Reference obj obtained. Processing request...")
 
-            return None if not hasattr(screen, f"button_{button_id}") else getattr(screen, f"button_{button_id}")(params, self.id, scheduled_message_id)
+            try:
+                return None if not hasattr(screen, f"button_{button_id}") else getattr(screen, f"button_{button_id}")(params, self.id, scheduled_message_id)
+            except Exception as e:
+                print(e)
 
     def show_screen_to(self, screen_id, format_strs=None, callback_data=None):
         self.current_screen_code = screen_id
@@ -127,12 +135,12 @@ class BotUser(models.Model):
                     away_team_name = ""
 
                 try:
-                    competition_name = Competition._get_({"id": event.competition_id}).name
+                    competition_name = Competition._get_({"id": event.competition_id})[0].name
                 except:
                     competition_name = ""
 
                 try:
-                    rules_set_name = RulesSet.objects.get(pk=event.rules_set_id).name
+                    rules_set_name = RulesSet._get_({"id": event.rules_set_id})[0].name
                 except: 
                     rules_set_name = ""
 

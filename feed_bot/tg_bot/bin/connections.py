@@ -1,5 +1,6 @@
 # TODO update from pooling to webhook (look https://pythondigest.ru/view/23089/ for an example)
 
+from pprint import pformat
 from decouple import config
 
 import telebot
@@ -147,6 +148,8 @@ class PollingConnection(Connection):
 
             if type(scheduled_messages) is list and len(scheduled_messages) > 0 and scheduled_messages[0] != 0:
                 for scheduled_message in scheduled_messages:
+
+                    print(scheduled_message)
 
                     if int(scheduled_message[2]) <= int(time.time()):
 

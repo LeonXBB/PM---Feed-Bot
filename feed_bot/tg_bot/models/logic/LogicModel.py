@@ -6,28 +6,15 @@ class LogicModel(models.Model):
     @classmethod
     def _get_(cls, params):
 
-        rv = []
+        k, v = list(params.items())[0]
 
-        for k, v in params.items():
-            if len(rv) == 0: rv = cls.objects.filter(**{k: v})
-            else: rv = rv.filter(**{k: v}) 
+        rv = cls.objects.filter(**{k: v})
+
+        if len(list(params.items())) > 1:
+            for k, v in list(params.items())[1:]:
+                rv = rv.filter(**{k: v}) 
         
-        return rv
-        
-        '''
-        rv = []
-
-        for obj in cls.objects.all():
-            
-            true = True
-            for k, v in params.items():
-                if getattr(obj, k) != v:
-                    true = False
-            
-            if true: rv.append(obj)
-
-        return rv
-        '''
+        return [*rv,]
 
     created = models.CharField(max_length=5096, default=f"{{}}") # "by": user_id, "at": timestamp
     status = models.IntegerField(default=0)

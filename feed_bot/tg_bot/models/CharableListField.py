@@ -5,6 +5,11 @@ class CharableListField(models.CharField):
 
     description = "Easy way to deal with Python lists and tuples in native style"
 
+    def __getitem__(self, index):
+        if index > -1:
+            return self.to_python(self.value)[index]
+        return self.to_python(self.value)[len(self.to_python(self.value)) + index]
+
     def __init__(self, *args, **kwargs):
         kwargs["max_length"] = 5096
         kwargs["default"] = "[]"

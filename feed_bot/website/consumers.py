@@ -125,7 +125,7 @@ class EventConsumer(WebsocketConsumer):
         try:
             mess.append("messages_start")
 
-            for message in APIMessage.objects.filter(event_id=int(event_id)):
+            for message in APIMessage.objects.filter(event_id=int(event_id)).order_by("hour", "minute", "second"):
                 mess.extend((f"{message.hour}:{message.minute}:{message.second}", f"{message.score_1}:{message.score_2}", message.message))
 
             mess.append("messages_end")
@@ -143,8 +143,6 @@ class EventConsumer(WebsocketConsumer):
     def update_scores(self, channel_event):
 
         mess = f"new_score_{channel_event.get('content_team')}_{channel_event.get('content_period')}_{channel_event.get('content_value')}_{channel_event.get('content_score')}_{channel_event.get('content_opposite_value')}_{channel_event.get('content_opposite_score')}"
-
-        self.send(text_data=json.dumps(mess))
 
         self.send(text_data=json.dumps(mess))
 

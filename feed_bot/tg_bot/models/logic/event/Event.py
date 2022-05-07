@@ -578,6 +578,8 @@ class Event(LogicModel):  #TODO move template to different class?
 
     def run(self, command="_"): #TODO JSON
         
+        print(300)
+
         from ..RulesSet import RulesSet
         from ..Team import Team
         from ..CoinToss import CoinToss
@@ -585,27 +587,45 @@ class Event(LogicModel):  #TODO move template to different class?
         from ..Point import Point
         from ..SideChange import SideChange
 
+        print(301)
+
         from ...telebot.BotUser import BotUser
         from ...telebot.ScheduledMessage import ScheduledMessage
 
+        print(302)
+
         rv = []
+
+        print(303)
 
         admin = BotUser._get_({"id": self.admin_id})[0]
 
+        print(304)
+
         rules_set = RulesSet._get_({"id": self.rules_set_id})[0]
+
+        print(305)
 
         home_team_name = Team._get_({"id": self.home_team_id})[0].name
         away_team_name = Team._get_({"id": self.away_team_id})[0].name
 
+        print(306)
+
         period_count = len(Period.objects.filter(event_id=self.id))
         coin_toss_count = len(CoinToss.objects.filter(event_id=self.id))
         
+        print(307)
+
         try: # TODO change to check if we have a period
             last_period_id = Period._get_({"event_id": self.id})[-1].id
         except:
             pass
 
+        print(308)
+
         point_score = []
+
+        print(309)
 
         for period_id in self.periods_ids.split(";"):
             if period_id:
@@ -632,21 +652,32 @@ class Event(LogicModel):  #TODO move template to different class?
                 score_sum[0] += sublist[0]
                 score_sum[1] += sublist[1]
 
+        print(310)
+        
         def check_remainders():
+
+            print(311)
 
             def check_sent_already(remainder_id, group_name): #TODO JSON move to utils
                 return len(ScheduledMessage._get_({"content_id": remainder_id, "group_name": group_name})) > 0
             
+            print(312)
+
             if self.status == 1 and not check_sent_already(104, f"event_{self.id}_start"):   
                 rv.extend(Remainder._get_("EventScheduled").schedule(int(time.time()), self.admin_id, [[self.id, home_team_name, away_team_name] ,], f"event_{self.id}_start", [[self.id, self.id], ]))
 
+            print(313)
+
             #check coin_toss
             if self.status != 4 and (period_count < rules_set.periods_in_event or rules_set.periods_in_event == 0) and rules_set.coin_tosses_before_periods[period_count] == 1: # as of 1st run we haven't created period obj yet
-                
+                print(313.1)
+                print(self.status, period_count, rules_set.periods_in_event, rules_set.coin_tosses_before_periods)
                 if not check_sent_already(140, f"event_{self.id}_coin_toss_{coin_toss_count}"):
-
-                    when = int(self.start_scheduled_epoch) - int(rules_set.coin_toss_start_before_minutes[coin_toss_count]) * 60
-                    
+                    print(313.2)
+                    if coin_toss_count == 0:
+                        when = int(self.start_scheduled_epoch) - int(rules_set.coin_toss_start_before_minutes[coin_toss_count]) * 60
+                    else:
+                        when = int(Period._get_({"event_id": self.id})[-1].end_actual_epoch) + rules_set.interval_between_periods_minutes[period_count - 1] - int(rules_set.coin_toss_start_before_minutes[coin_toss_count]) * 60
                     rv.extend(Remainder._get_("CoinTossHappens").schedule(when, self.admin_id, [[self.id, home_team_name, away_team_name] ,], f"event_{self.id}_coin_toss_{coin_toss_count}", [[self.id, self.id], ]))
 
                     for offset in rules_set.coin_toss_remainder_minutes_before[coin_toss_count]:
@@ -657,6 +688,8 @@ class Event(LogicModel):  #TODO move template to different class?
                     Utils.api("coin_toss_scheduled", "logic", event_id=self.id, coin_toss_count=coin_toss_count, period_count=period_count, coin_toss_epoch=when)
             # check event start
             
+            print(314)
+
             if self.status == 1 and not check_sent_already(100, f"event_{self.id}_start") and (period_count < rules_set.periods_in_event or rules_set.periods_in_event == 0) and not rules_set.coin_tosses_before_periods[period_count] == 1:
                     
                 when = int(self.start_scheduled_epoch)
@@ -669,6 +702,8 @@ class Event(LogicModel):  #TODO move template to different class?
 
             # check event end
 
+            print(315)
+
             if rules_set.event_length_minutes != 0 and self.status == 2 and not check_sent_already(101, f"event_{self.id}_end"):
                     
                 when = int(self.end_scheduled_epoch)
@@ -679,55 +714,82 @@ class Event(LogicModel):  #TODO move template to different class?
                     if offset:
                         rv.extend(Remainder._get_("EventAboutToEnd").schedule(when - int(offset) * 60, self.admin_id, [[self.id, home_team_name, away_team_name, offset] ,], f"event_{self.id}_start", [[self.id, self.id], ]))
 
+            print(316)
+
             # check side change reminders
             # if it's between periods and it's time to change sides and not sent yet
             if self.status == 3 and (period_count < rules_set.periods_in_event or rules_set.periods_in_event == 0) and rules_set.side_changes_after_periods[period_count - 1] == 1 and not check_sent_already(150, f"event_{self.id}_side_change_after_period_{period_count}"):
                 rv.extend((Remainder._get_("SideChangeHappens").schedule(int(time.time()), self.admin_id, [[] ,], f"event_{self.id}_side_change_after_period_{period_count}", [[], ])))
             
+            print(317)
+
         def check_coin_toss():
-            return data[0] == "coinToss"
+            print(318)
+            print(data)
+            return len(data) > 0 and data[0] == "coinToss"
 
         def check_end():
 
-            def check_end_by_score_period():
+            print(319)
 
+            def check_end_by_score_period():
+                
+                print(320)
                 return rules_set.win_event_by == 2 and (((max(int_score) >= rules_set.periods_to_win_event and (rules_set.stop_event_after_enough_periods == 1)) or (max(int_score) >= rules_set.periods_in_event or rules_set.periods_in_event == 0)) and max(int_score) - min(int_score) > rules_set.min_difference_periods_to_win_event)
 
             def check_end_by_score_sum():
+                print(321)
                 return rules_set.win_event_by == 3 and (((max(score_sum) >= rules_set.periods_to_win_event and rules_set.stop_event_after_enough_periods == 1) or( max(score_sum) > rules_set.periods_in_event) or rules_set.periods_in_event == 0) and max(score_sum) - min(score_sum) > rules_set.min_difference_periods_to_win_event)
 
+            print(322)
             return check_end_by_score_period() or check_end_by_score_sum()
 
         def check_side_change():
+            print(323)
+            print(period_count, rules_set.side_changes_after_periods)
             try: #TODO check lenght instead of try
                 return self.status == 3 and rules_set.side_changes_after_periods[period_count - 1] == 1
-            except:
+            except Exception as e:
+                print(e)
                 return False
 
         def check_new_period():
+            print(324)
             for period_id in self.periods_ids.split(";"):
                 if period_id:
                     period = Period._get_({"id": int(period_id)})[0]
 
+            print(325)
             return self.status == 3 and not rules_set.coin_tosses_before_periods[period_count] == 1 and not period.status == 0
 
+        print(326)
         data = command.split("_")
 
+        print(327)
         check_remainders()
 
+        print(328)
         if check_end():
             return self.end()
 
+        print(329)
         if check_new_period() and not check_coin_toss(): #TODO fix for 5th set
+
+            print(350)
 
             new_period = Period()
             new_period.event_id = self.id
             new_period.save()
 
+            print(351)
+
             rv.extend(new_period.start())
+
+            print(352)
 
             new_period.save()
 
+        print(330)
         if check_side_change():
             
             side_change_ = SideChange()
@@ -737,6 +799,7 @@ class Event(LogicModel):  #TODO move template to different class?
 
             Utils.api("side_change_after_period_happened", "logic", event_id=self.id, period_count=period_count, period_id=last_period_id, side_change_id=side_change_.id)
 
+        print(331)
         if check_coin_toss():
             
             obj = CoinToss()
@@ -751,6 +814,7 @@ class Event(LogicModel):  #TODO move template to different class?
 
             rv.extend(obj.show_template())
         
+        print(332)
         return rv
 
     def cancel(self, task): #TODO JSON

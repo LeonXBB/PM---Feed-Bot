@@ -36,7 +36,7 @@ class MainMenu(Screen):
 
         return rv
 
-    def button_1(self, params, user_id): # events list # TODO WRITE!
+    def button_1(self, params, user_id): # events list
         
         return Utils.api("execute_method", 
         model="BotUser",
@@ -44,7 +44,7 @@ class MainMenu(Screen):
         method={"name": "show_list_of_events", "params": []}
         )[0]
 
-    def button_2(self, params, user_id): # set rules editor # TODO WRITE!
+    def button_2(self, params, user_id): # set rules editor
         
         return Utils.api("execute_method", 
         model="BotUser",
