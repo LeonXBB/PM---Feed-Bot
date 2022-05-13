@@ -21,7 +21,7 @@ class NewEventMenuReady(Screen):
         cancel = {"text": self.strings[1][9], "data": "6_0"}
         save = {"text": self.strings[1][8], "data": "5_0"}
 
-        layout = [(edit_home_team_name, edit_away_team_name), (edit_match_date, edit_match_time), (edit_competition_name, edit_rules_set), (clear, go_back), (save,)]
+        layout = [(edit_home_team_name, edit_away_team_name), (edit_match_date, edit_match_time), (edit_competition_name, edit_rules_set), (clear, go_back, cancel), (save,)]
         
         return [layout, ]
 
