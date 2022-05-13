@@ -96,8 +96,10 @@ class NewEventMenuNonReady(Screen):
 
     def button_5(self, params, user_id): # cancel edit
 
-        return Utils.api("execute_method",
-        model="BotUser",
-        params={"id": user_id},
-        method={"name": "show_screen_to", "params": ["10", [[config("telebot_version")], ], ]} #TODO move static formatters into screen class?
-        )[0]
+        from ...models import Event, EventTemplateEdit
+
+        event = Event._get_({"admin_id": user_id, "status": 0})[0]
+        template_edit = EventTemplateEdit._get_({"event_id": event.id})[-1]
+        template_edit.undo()
+
+        return event.show_template()
