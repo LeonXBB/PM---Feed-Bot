@@ -16,8 +16,9 @@ class NewEventMenuNonReady(Screen):
         edit_rules_set = {"text": self.strings[1][5], "data": "3_0"}
         clear = {"text": self.strings[1][6], "data": "4_0"}
         go_back = {"text": self.strings[1][7], "data": "4_1"}
+        cancel = {"text": self.strings[1][8], "data": "5_0"} # if you're having problems with this, that's because there is no string for this button in your db.
 
-        layout = [(edit_home_team_name, edit_away_team_name), (edit_match_date, edit_match_time), (edit_competition_name, edit_rules_set), (clear, go_back)]
+        layout = [(edit_home_team_name, edit_away_team_name), (edit_match_date, edit_match_time), (edit_competition_name, edit_rules_set), (clear, go_back, cancel)]
         
         return [layout, ]
 
@@ -68,11 +69,11 @@ class NewEventMenuNonReady(Screen):
         method={"name": "show_screen_to", "params": ["26", [], ]} #TODO move static formatters into screen class?
         )[0]
 
-    def button_4(self, params, user_id): # cancel / to the menu
+    def button_4(self, params, user_id): # clear / to the menu
         
         code = params[0]
 
-        if code == "0": # cancel
+        if code == "0": # clear
             
             event_id = Utils.api("get", 
             model="Event",
@@ -88,6 +89,14 @@ class NewEventMenuNonReady(Screen):
             )
 
         return Utils.api("execute_method", 
+        model="BotUser",
+        params={"id": user_id},
+        method={"name": "show_screen_to", "params": ["10", [[config("telebot_version")], ], ]} #TODO move static formatters into screen class?
+        )[0]
+
+    def button_5(self, params, user_id): # cancel edit
+
+        return Utils.api("execute_method",
         model="BotUser",
         params={"id": user_id},
         method={"name": "show_screen_to", "params": ["10", [[config("telebot_version")], ], ]} #TODO move static formatters into screen class?

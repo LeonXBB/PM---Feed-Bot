@@ -18,6 +18,7 @@ class NewEventMenuReady(Screen):
         edit_rules_set = {"text": self.strings[1][5], "data": "3_0"}
         clear = {"text": self.strings[1][6], "data": "4_0"}
         go_back = {"text": self.strings[1][7], "data": "4_1"}
+        cancel = {"text": self.strings[1][9], "data": "6_0"}
         save = {"text": self.strings[1][8], "data": "5_0"}
 
         layout = [(edit_home_team_name, edit_away_team_name), (edit_match_date, edit_match_time), (edit_competition_name, edit_rules_set), (clear, go_back), (save,)]
@@ -97,4 +98,12 @@ class NewEventMenuReady(Screen):
         model="Event",
         params={"admin_id": user_id, "status": 0},
         method={"name": "save_template", "params": []}
+        )[0]
+
+    def button_6(self, params, user_id): # cancel
+
+        return Utils.api("execute_method",
+        model="BotUser",
+        params={"id": user_id},
+        method={"name": "show_screen_to", "params": ["10", [[config("telebot_version")], ], ]}
         )[0]
