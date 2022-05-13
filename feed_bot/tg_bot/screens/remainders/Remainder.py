@@ -16,9 +16,9 @@ class Remainder(Screen):
             if ((remainder.remainder_id == remainder_id or remainder_id is None) and (remainder.screen_id == screen_id or screen_id is None) and (remainder.remainder_name == name or name is None)): 
                 return remainder
 
-    def __init__(self, via, screen_id="-1", remainder_name="") -> None:
+    def __init__(self, via, screen_id="-1", remainder_name="", bot_strings=None) -> None:
         
-        super().__init__(via, screen_id, remainder_name)
+        super().__init__(via, screen_id, remainder_name, bot_strings)
 
         self.remainder_id = str(int(screen_id) - 100) if len(str(int(screen_id) - 100)) > 1 else f"0{str(int(screen_id) - 100)}"
         self.remainder_name = remainder_name
@@ -50,10 +50,11 @@ class Remainder(Screen):
         )
 
         for scheduled_message_id in scheduled_messages_ids:
-            Utils.api("update",
-            model="ScheduledMessage",
-            filter_params={"id": int(scheduled_message_id[0])},
-            update_params={"is_active": 0, "pause_epoch": int(time.time())})
+            if scheduled_message_id:
+                Utils.api("update",
+                model="ScheduledMessage",
+                filter_params={"id": int(scheduled_message_id[0])},
+                update_params={"is_active": 0, "pause_epoch": int(time.time())})
         
     @classmethod
     def reschedule(cls, group_name, add_time=True, new_time=None): # copilot: call Utils.api to update self.is_active to True (represented as int a), self.epoch to self.epoch + difference between int(time.time()) and self.pause_epoch, and set self.pause_epoch to an empty string ("")  
@@ -65,17 +66,18 @@ class Remainder(Screen):
         )
 
         for scheduled_message_id in scheduled_messages_ids:
-            epoch, pause_epoch = Utils.api("get",
-            model="ScheduledMessage",
-            params={"id": int(scheduled_message_id[0])},
-            fields=["epoch", "pause_epoch"])[0]
+            if scheduled_message_id:
+                epoch, pause_epoch = Utils.api("get",
+                model="ScheduledMessage",
+                params={"id": int(scheduled_message_id[0])},
+                fields=["epoch", "pause_epoch"])[0]
 
-            new_epoch = int(time.time()) + int(epoch) - int(pause_epoch) if add_time and new_time is None else epoch if new_time is None else new_time
+                new_epoch = int(time.time()) + int(epoch) - int(pause_epoch) if add_time and new_time is None else epoch if new_time is None else new_time
 
-            Utils.api("update",
-            model="ScheduledMessage",
-            filter_params={"id": int(scheduled_message_id)},
-            update_params={"is_active": 1, "epoch": str(new_epoch) ,"pause_epoch": ""})
+                Utils.api("update",
+                model="ScheduledMessage",
+                filter_params={"id": int(scheduled_message_id)},
+                update_params={"is_active": 1, "epoch": str(new_epoch) ,"pause_epoch": ""})
 
     @classmethod
     def assign_group(cls, scheduled_message_id, group_name):

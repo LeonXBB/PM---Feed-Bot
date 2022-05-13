@@ -13,9 +13,6 @@ from asgiref.sync import async_to_sync
 
 from decouple import config
 
-import gspread
-from oauth2client.service_account import ServiceAccountCredentials
-
 import time
 import datetime
 
@@ -271,6 +268,7 @@ class BotAPI(TemplateView):
 
         elif task == "kick_in":
 
+            '''
             def google_sheets_magic(sheet_type):
 
                 sleep_time = 1
@@ -297,8 +295,6 @@ class BotAPI(TemplateView):
                     
                     def init_text_language(language_index):
                         
-                        print('here', language_index)
-
                         new_obj = models.TextLanguage()
                         
                         sleep_time = 1
@@ -395,10 +391,13 @@ class BotAPI(TemplateView):
             #localziation_sheet = google_sheets_magic("localization_table_name")
             #rules_sets_sheet = google_sheets_magic("rules_sets_schema_table_name")
             
-            #init_localization()
-            #init_rules_sets()
+            init_localization()
+            init_rules_sets()
+            '''
 
+            print("\n", time.strftime("%H:%M:%S"), "Starting screens init for the server...\n")
             Utils.init_screens("server")
+            print("\n", time.strftime("%H:%M:%S"), "Screens init for the server finished.\n")
 
             return JsonResponse([0, ], safe=False)
 
@@ -431,7 +430,7 @@ class BotLogicAPI(TemplateView): # TODO
 
                 old_val = data["old_val"]
                 new_val = data["new_val"]
-                                
+
                 if data["attr"] == "home_team":
                     try: #TODO change to check if team exists
                         old_val = getattr(models, "Team")._get_({"id": data["old_val"]})[0].name
@@ -467,6 +466,8 @@ class BotLogicAPI(TemplateView): # TODO
                     new_val = getattr(models, "RulesSet")._get_({"id": data["new_val"]})[0].name
 
                 return old_val, new_val
+
+            event = Event.objects.get(id=data["event_id"])
 
             old_val, new_val = get_verbose_vals()
 
@@ -580,6 +581,8 @@ class BotLogicAPI(TemplateView): # TODO
 
         elif task == "coin_toss_edited":
 
+            event = Event._get_({'id': data["event_id"]})[0]
+
             attr = "Команда зліва" if data["attr"] == "left_team_id" else "Команда, що починає"
             val = data["val"]
 
@@ -625,7 +628,7 @@ class BotLogicAPI(TemplateView): # TODO
                 {"type": "update.scores", "content_team": 0 if data["team_id"] == event.home_team_id else 1, "content_period": data["period_count"]-1, "content_value": data["point_value"], "content_opposite_value": data["opposite_point_value"], "content_score": data["new_team_score"], "content_opposite_score": data["new_opposite_team_score"]}
             )
 
-            string = f"Зміна рахунку команди {team_name}. Тип: {point_type_name}, вага: {data['point_value']}, вага протилежної команди: {data['opposite_point_value']}, нове значення рахунку: {data['new_team_score']}, протилежної команди: {data['opposite_team_score']}"
+            string = f"Зміна рахунку команди {team_name}. Тип: {point_type_name}, вага: {data['point_value']}, вага протилежної команди: {data['opposite_point_value']}, нове значення рахунку: {data['new_team_score']}, протилежної команди: {data['new_opposite_team_score']}"
             mess = APIMessage()
             mess.add(event.id, string)
             mess.send()

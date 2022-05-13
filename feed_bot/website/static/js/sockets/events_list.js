@@ -107,7 +107,7 @@ function get_html_string(data, button_id) {
         
         rv += get_row(data, i)
     
-        if (i >= 7*(max_events_to_show-1)) {
+        if (i >= 7*(max_events_to_show - 1)) {
             rv += `<tr><td colspan="5"><button class="centered_y generic_button bordered grey" id="show_more_events_button" onclick=show_more_events(${button_id})>ЗАГРУЗИТЬ ЕЩЕ</button></td></tr></table>`;
             return rv;
         };

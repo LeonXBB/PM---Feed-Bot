@@ -12,8 +12,8 @@ class PeriodEnd(Remainder):
 
         return [layout, ]
 
-    def __init__(self, via) -> None:
-        super().__init__(via, "111", "PeriodEnd")
+    def __init__(self, via, bot_strings=None) -> None:
+        super().__init__(via, "111", "PeriodEnd", bot_strings)
 
     def button_0(self, params, user_id, scheduled_message_id):
         

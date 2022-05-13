@@ -84,61 +84,8 @@ ASGI_APPLICATION = 'meta.asgi.application'
 DATABASE_ROUTERS = ('tg_bot.dbrouters.defaultFileScan', 'website.dbrouters.defaultFileScan')
 
 DATABASES = {
-    '''
+    
     'default': {
-        
-        'ENGINE': 'django.db.backends.postgresql_psycopg2',
-        'NAME': 'default',
-        'USER': config("postgres_user"),
-        'PASSWORD': config("postgres_password"),
-        'HOST': config("postgres_host"),
-        'PORT': config("postgres_port")
-    },
-    'logic': {
-
-        'ENGINE': 'django.db.backends.postgresql_psycopg2',
-        'NAME': 'logic',
-        'USER': config("postgres_user"),
-        'PASSWORD': config("postgres_password"),
-        'HOST': config("postgres_host"),
-        'PORT': config("postgres_port")
-
-    },
-
-    'localization': {
-
-        'ENGINE': 'django.db.backends.postgresql_psycopg2',
-        'NAME': 'localization',
-        'USER': config("postgres_user"),
-        'PASSWORD': config("postgres_password"),
-        'HOST': config("postgres_host"),
-        'PORT': config("postgres_port")
-
-    },
-
-    'telebot': {
-
-        'ENGINE': 'django.db.backends.postgresql_psycopg2',
-        'NAME': 'telebot',
-        'USER': config("postgres_user"),
-        'PASSWORD': config("postgres_password"),
-        'HOST': config("postgres_host"),
-        'PORT': config("postgres_port")
-
-    },
-
-    'website': {
-
-        'ENGINE': 'django.db.backends.postgresql_psycopg2',
-        'NAME': 'website',
-        'USER': config("postgres_user"),
-        'PASSWORD': config("postgres_password"),
-        'HOST': config("postgres_host"),
-        'PORT': config("postgres_port")
-    },
-    '''
-
-    'postgres': {
 
         'ENGINE': 'django.db.backends.postgresql_psycopg2',
 
@@ -151,10 +98,70 @@ DATABASES = {
         'HOST': config("postgres_host"),
 
         'PORT': config("postgres_port")
-    },
-    
+    }
 }
+'''
+    'localization': {
 
+        'ENGINE': 'django.db.backends.postgresql_psycopg2',
+
+        'NAME': 'localization',
+
+        'USER': config("postgres_user"),
+
+        'PASSWORD': config("postgres_password"),
+
+        'HOST': config("postgres_host"),
+
+        'PORT': config("postgres_port")
+    },
+
+    'logic': {
+
+        'ENGINE': 'django.db.backends.postgresql_psycopg2',
+
+        'NAME': 'logic',
+
+        'USER': config("postgres_user"),
+
+        'PASSWORD': config("postgres_password"),
+
+        'HOST': config("postgres_host"),
+
+        'PORT': config("postgres_port")
+    },
+
+    'telebot': {
+
+        'ENGINE': 'django.db.backends.postgresql_psycopg2',
+
+        'NAME': 'telebot',
+
+        'USER': config("postgres_user"),
+
+        'PASSWORD': config("postgres_password"),
+
+        'HOST': config("postgres_host"),
+
+        'PORT': config("postgres_port")
+    },
+
+    'website': {
+
+        'ENGINE': 'django.db.backends.postgresql_psycopg2',
+
+        'NAME': 'website',
+
+        'USER': config("postgres_user"),
+
+        'PASSWORD': config("postgres_password"),
+
+        'HOST': config("postgres_host"),
+
+        'PORT': config("postgres_port")
+    }
+}
+'''
 
 # Password validation
 # https://docs.djangoproject.com/en/4.0/ref/settings/#auth-password-validators
@@ -191,7 +198,7 @@ USE_TZ = True
 # https://docs.djangoproject.com/en/4.0/howto/static-files/
 
 STATICFILES_DIRS = [
-    os.path.join(BASE_DIR, 'website\static'),
+    os.path.join(BASE_DIR, 'website/static'),
     os.path.join(BASE_DIR, 'static'),
 ]
 STATIC_URL = "/static/"

@@ -17,8 +17,8 @@ class MainMenu(Screen):
         layout = [(new_event,), (event_list,), (language_edit,), (exit,)]
         return [layout, ]
 
-    def __init__(self, via) -> None:
-        super().__init__(via, "10", "MainMenu")
+    def __init__(self, via, bot_strings=None) -> None:
+        super().__init__(via, "10", "MainMenu", bot_strings)
            
     def button_0(self, params, user_id): # new event
         
@@ -36,7 +36,7 @@ class MainMenu(Screen):
 
         return rv
 
-    def button_1(self, params, user_id): # events list # TODO WRITE!
+    def button_1(self, params, user_id): # events list
         
         return Utils.api("execute_method", 
         model="BotUser",
@@ -44,7 +44,7 @@ class MainMenu(Screen):
         method={"name": "show_list_of_events", "params": []}
         )[0]
 
-    def button_2(self, params, user_id): # set rules editor # TODO WRITE!
+    def button_2(self, params, user_id): # set rules editor
         
         return Utils.api("execute_method", 
         model="BotUser",

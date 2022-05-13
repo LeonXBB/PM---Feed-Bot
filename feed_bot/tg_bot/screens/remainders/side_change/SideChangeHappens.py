@@ -11,5 +11,5 @@ class SideChangeHappens(Remainder):
 
         return [layout, ]
 
-    def __init__(self, via) -> None:
-        super().__init__(via, "150", "SideChangeHappens")
+    def __init__(self, via, bot_strings=None) -> None:
+        super().__init__(via, "150", "SideChangeHappens", bot_strings)

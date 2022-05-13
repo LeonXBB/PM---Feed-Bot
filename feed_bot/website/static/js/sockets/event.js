@@ -93,10 +93,14 @@ function load_event_data(event_id) {
             let opposite_period_score_td = document.getElementById("team_" + (1 - team_index) + "_period_" + period_index);
             let opposite_total_score_td = document.getElementById("total_" + (1 - team_index));
 
+            let period_number_td = document.getElementsByClassName("period_number")[period_index];
+
             period_score_td.innerHTML = new_score;
             total_score_td.innerHTML = parseInt(total_score_td.innerHTML) + parseInt(score_value);
             opposite_period_score_td.innerHTML = opposite_new_score;
             opposite_total_score_td.innerHTML = parseInt(opposite_total_score_td.innerHTML) + parseInt(opposite_score_value);
+
+            period_number_td.innerHTML = (period_index + 1) + "-й";
 
             return;
 

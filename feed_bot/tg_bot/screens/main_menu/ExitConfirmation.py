@@ -5,8 +5,8 @@ from ...bin.utils import Utils
 
 class ExitConfirmation(Screen):
 
-    def __init__(self, via) -> None:
-        super().__init__(via, "12", "ExitConfirmation")
+    def __init__(self, via, bot_strings=None) -> None:
+        super().__init__(via, "12", "ExitConfirmation", bot_strings)
 
     def get_keyboards(self, data=None, via=None):
         

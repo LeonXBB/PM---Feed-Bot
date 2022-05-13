@@ -18,12 +18,10 @@ class Utils:
         done = False
         while not done:
             try:
-                rv = requests.post(f"{config('url_server_address')}/api{subdomain}", json={"task": task, **kwargs}).json()
+                rv = requests.post(f"{config('output_protocol')}://{config('output_address')}/api{subdomain}", json={"task": task, **kwargs}).json()
                 done = True
             except Exception as e:
-                with open("api_errors_log.txt", "w+", encoding="utf-8") as f:
-                    f.write(f"{time.time()}: {e}")
-                time.sleep(1)
+                time.sleep(1) #TODO : make it configurable
 
         return rv
 
@@ -32,8 +30,23 @@ class Utils:
         
         from ..screens import all_screens
 
+        if via == "server":
+            with open("screen_strings.txt", "w+", encoding="utf-8") as file:
+                file.write("{")
+
+        elif via == "bot" or via == "scheduling":
+            with open("feed_bot/screen_strings.txt", "r", encoding="utf-8") as file:
+                raw_strings = file.read()
+                screen_strings = eval(raw_strings)
+
         for screen in all_screens:
             try:
-                screen(via)
+                print(time.strftime("%H:%M:%S"), f"Initializing screen {screen.__name__} for {via}")
+                screen(via) if via == "server" else screen("bot", screen_strings[screen.__name__])
+                print(time.strftime("%H:%M:%S"), f"Screen {screen.__name__} initialized for {via}")
             except Exception as e:
                 print(e)
+
+        if via == "server":
+            with open("screen_strings.txt", "a", encoding="utf-8") as file:
+                file.write("}")

@@ -30,7 +30,7 @@ class RulesSet(LogicModel):
     event_length_minutes = models.IntegerField(default=0)
     periods_lenght_minutes = CharableListField()
 
-    interval_between_periods_munutes = CharableListField()
+    interval_between_periods_minutes = CharableListField()
 
     event_timer_direction = models.IntegerField(default=0)
     period_timers_directions = CharableListField()
@@ -39,7 +39,6 @@ class RulesSet(LogicModel):
 
     side_changes_after_periods = CharableListField()
     side_changes_during_periods = CharableListField()
-    side_changes_during_periods_scores = CharableListField()
 
     coin_tosses_before_periods = CharableListField()
     coin_toss_start_before_minutes  = CharableListField()

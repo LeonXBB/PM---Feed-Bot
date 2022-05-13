@@ -11,5 +11,5 @@ class PeriodEnded(Remainder):
 
         return [layout, ]
 
-    def __init__(self, via) -> None:
-        super().__init__(via, "115", "PeriodEnded")
+    def __init__(self, via, bot_strings=None) -> None:
+        super().__init__(via, "115", "PeriodEnded", bot_strings)

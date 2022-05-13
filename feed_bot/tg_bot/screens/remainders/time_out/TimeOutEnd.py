@@ -12,8 +12,8 @@ class TimeOutEnd(Remainder):
         
         return [layout, ]
 
-    def __init__(self, via) -> None:
-        super().__init__(via, "121", "TimeOutEnd")
+    def __init__(self, via, bot_strings=None) -> None:
+        super().__init__(via, "121", "TimeOutEnd", bot_strings)
 
     def button_0(self, params, user_id, scheduled_message_id): #TODO move to Period.run
 

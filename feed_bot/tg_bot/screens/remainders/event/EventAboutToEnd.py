@@ -13,8 +13,8 @@ class EventAboutToEnd(Remainder):
 
         return [layout, ]
 
-    def __init__(self, via) -> None:
-        super().__init__(via, "103", "EventAboutToEnd")
+    def __init__(self, via, bot_strings=None) -> None:
+        super().__init__(via, "103", "EventAboutToEnd", bot_strings)
 
     def button_1(self, params, user_id, scheduled_message_id):
         

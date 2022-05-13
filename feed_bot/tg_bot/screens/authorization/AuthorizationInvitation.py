@@ -7,8 +7,8 @@ from ...bin.utils import Utils
 
 class AuthorizationInvitation(Screen):
 
-    def __init__(self, via) -> None:
-        super().__init__(via, "00", "AuthorizationInvitation")
+    def __init__(self, via, bot_strings=None) -> None:
+        super().__init__(via, "00", "AuthorizationInvitation", bot_strings)
 
     def text(self, text, user_id): #TODO move to user class
 

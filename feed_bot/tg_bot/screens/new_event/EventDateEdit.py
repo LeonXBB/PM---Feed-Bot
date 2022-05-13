@@ -7,8 +7,8 @@ from ..Screen import Screen
 
 class EventDateEdit(Screen):
 
-    def __init__(self, via) -> None:
-        super().__init__(via, "24", "EventDateEdit")
+    def __init__(self, via, bot_strings=None) -> None:
+        super().__init__(via, "24", "EventDateEdit", bot_strings)
 
     def text(self, text, user_id):
         

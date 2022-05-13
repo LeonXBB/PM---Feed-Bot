@@ -15,11 +15,11 @@ class CoinTossPanel(Screen):
         save = {"text": self.strings[1][3], "data": "3_{}"}
 
         layout = ((left_team,), (ball_control, ), (main_menu, save))
-        
+
         return [layout, ]
 
-    def __init__(self, via) -> None:
-        super().__init__(via, "32", "CoinTossPanel")
+    def __init__(self, via, bot_strings=None) -> None:
+        super().__init__(via, "32", "CoinTossPanel", bot_strings)
 
     def button_0(self, params, user_id): # left team
         

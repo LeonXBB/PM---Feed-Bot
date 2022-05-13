@@ -7,8 +7,8 @@ from ...bin.utils import Utils
 
 class AuthorizationWrongPassword(Screen):
 
-    def __init__(self, via) -> None:
-        super().__init__(via, "01", "AuthorizationWrongPassword")
+    def __init__(self, via, bot_strings=None) -> None:
+        super().__init__(via, "01", "AuthorizationWrongPassword", bot_strings)
 
     def text(self, text, user_id): #TODO move to user class
 

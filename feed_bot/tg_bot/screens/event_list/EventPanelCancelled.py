@@ -12,8 +12,8 @@ class EventPanelCancelled(Screen):
 
         return [layout,]
 
-    def __init__(self, via) -> None:
-        super().__init__(via, "44", "EventPanelCancelled")
+    def __init__(self, via, bot_strings=None) -> None:
+        super().__init__(via, "44", "EventPanelCancelled", bot_strings)
 
     def button_0(self, params, user_id):
         
