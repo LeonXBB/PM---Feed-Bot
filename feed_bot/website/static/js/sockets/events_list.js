@@ -124,8 +124,6 @@ function show_event_list_for_rules_set(button_id, append=false) {
 
     let button = document.getElementById(button_id);
 
-    console.log(rules_set_id);
-
     window.events_socket.send("rules_set_id=" + rules_set_id);
 
     window.events_socket.onmessage = function(event) {
