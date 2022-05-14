@@ -13,7 +13,7 @@ function get_rules_sets() {
 
         document.getElementById("rules_set_row").innerHTML = html_string;
 
-        for (let j = 0; i < data.length; j+=2) {
+        for (let j = 0; j < data.length; j+=2) {
             var button = document.getElementById("rules_set_button_" + data[j]);
             button.onclick = () => show_event_list_for_rules_set(button.id);
         };
