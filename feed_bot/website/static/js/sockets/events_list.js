@@ -161,7 +161,7 @@ function show_event_list_for_rules_set(button_id, append=false) {
             
             button.classList.add("selected");
             for (let another_button of document.getElementsByClassName("rules_set_button")) {
-                if (another_button.id != button_id) {
+                if (another_button.id != button_id && another_button.classList.contains("selected")) {
                     another_button.classList.remove("selected");
                     max_events_to_show = max_events_step;
                 };
