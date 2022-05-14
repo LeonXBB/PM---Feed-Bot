@@ -297,6 +297,8 @@ class Period(LogicModel):
                             if total_technical_time_outs_this_period == i:
                                 if x == "0" or y == "0":
                                     res = (score[0] == int(x) if x != "0" else int(y)) or (score[1] == int(x) if x != "0" else int(y))
+                                elif x == "+" or y == "+":
+                                    res = sum(score) == int(x) if x != "+" else sum(score) == int(y)
                                 else:
                                     res = score[0] == int(x) and score[1] == int(y)
                             else:
@@ -336,6 +338,8 @@ class Period(LogicModel):
                             if total_side_changes_this_period == i:
                                 if x == "0" or y == "0":
                                     res = (score[0] == int(x) if x != "0" else int(y)) or (score[1] == int(x) if x != "0" else int(y))
+                                elif x == "+" or y == "+":
+                                    res = sum(score) == int(x) if x != "+" else sum(score) == int(y)
                                 else:
                                     res = score[0] == int(x) and score[1] == int(y)
                             else:
