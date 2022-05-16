@@ -72,7 +72,7 @@ class FeedBot(TeleBot):
                     for button in row:
                         
                         button_formatter = data[3][messages_count + len(keyboards)][i] if data[3] is not None and len(data[3]) > messages_count + len(keyboards) and data[3][messages_count + len(keyboards)] is not None and len(data[3][messages_count + len(keyboards)]) > i else list()
-                        callback_formatter = data[4][len(keyboards) - 1][i] if data[4] is not None and len(data[4]) >= len(keyboards) and data[4][len(keyboards)] is not None and len(data[4][len(keyboards)]) > i else list()
+                        callback_formatter = data[4][len(keyboards) - 1][i] if data[4] is not None and len(data[4]) >= len(keyboards) and data[4][len(keyboards) - 1] is not None and len(data[4][len(keyboards) - 1]) > i else list()
                         
                         keyboard[-1].append(InlineKeyboardButton(button["text"][user_language_id].format(button_formatter), callback_data=button["data"].format(callback_formatter)))
                         i += 1
