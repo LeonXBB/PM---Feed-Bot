@@ -78,7 +78,7 @@ class BotUser(models.Model):
 
             new_obj.save()
             
-            return self.send_remainder_to(160, time.time(), [], "new_password_pair", [])
+            return self.send_remainder_to(160, int(time.time()), [], "new_password_pair", [])
 
         else:    
             return self.receive_text_from(command)
