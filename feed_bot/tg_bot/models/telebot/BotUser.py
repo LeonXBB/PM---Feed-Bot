@@ -3,6 +3,7 @@ from decouple import config
 from django.db import models
 
 import time
+import hashlib
 
 from ...screens.Screen import Screen
 from ...screens.remainders.Remainder import Remainder
@@ -59,8 +60,24 @@ class BotUser(models.Model):
 
         if command == "/start":
             return self.show_screen_to("10", [[config("telebot_version")], ]) #TODO move static formatters into screen class?
+        
         elif command.startswith('/show_screen'):
             return self.show_screen_to(*command.split(" ")[1:]) if self.is_superadmin else None
+        
+        elif command.startswith('/new_user') and self.is_superadmin:
+                
+                from .PasswordPair import PasswordPair
+
+                password = command.split(" ")[1]
+                new_obj = PasswordPair()
+
+                if len(password) == 64:
+                    new_obj.password_sha256 = password
+                else:
+                    new_obj.password_sha256 = hashlib.sha256(password.encode('utf-8')).hexdigest()
+
+                new_obj.save()
+
         else:    
             return self.receive_text_from(command)
 
