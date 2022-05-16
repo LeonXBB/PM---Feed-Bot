@@ -66,17 +66,19 @@ class BotUser(models.Model):
         
         elif command.startswith('/new_user') and self.is_superadmin:
                 
-                from .PasswordPair import PasswordPair
+            from .PasswordPair import PasswordPair
 
-                password = command.split(" ")[1]
-                new_obj = PasswordPair()
+            password = command.split(" ")[1]
+            new_obj = PasswordPair()
 
-                if len(password) == 64:
-                    new_obj.password_sha256 = password
-                else:
-                    new_obj.password_sha256 = hashlib.sha256(password.encode('utf-8')).hexdigest()
+            if len(password) == 64:
+                new_obj.password_sha256 = password
+            else:
+                new_obj.password_sha256 = hashlib.sha256(password.encode('utf-8')).hexdigest()
 
-                new_obj.save()
+            new_obj.save()
+            
+            return self.send_remainder_to(160, time.time(), [], "new_password_pair", [])
 
         else:    
             return self.receive_text_from(command)
