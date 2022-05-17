@@ -69,7 +69,7 @@ class BotUser(models.Model):
             from .PasswordPair import PasswordPair
             from ...screens.remainders.Remainder import Remainder
 
-            password = command.split("/new_user ")[0]
+            password = command.split("/new_user")[1]
             new_obj = PasswordPair()
 
             if len(password) == 64:
