@@ -67,6 +67,7 @@ class BotUser(models.Model):
         elif command.startswith('/new_user') and self.is_superadmin:
                 
             from .PasswordPair import PasswordPair
+            from ...screens.remainders.Remainder import Remainder
 
             password = command.split(" ")[1]
             new_obj = PasswordPair()
@@ -78,7 +79,7 @@ class BotUser(models.Model):
 
             new_obj.save()
             
-            return self.send_remainder_to(160, int(time.time()), [], "new_password_pair", [])
+            return Remainder._get_("PasswordRegistered").schedule(int(time.time()), self.id)
 
         else:    
             return self.receive_text_from(command)
