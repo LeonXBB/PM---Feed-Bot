@@ -15,14 +15,14 @@ if __name__ == "__main__":
         os.chdir('feed_bot')
         #subprocess.run("daphne -v 0 meta.asgi:application")
         try:
-            for app_name in ("tg_bot", "website"):
-                subprocess.run(f"python manage.py makemigrations {app_name}")
-                subprocess.run(f"python manage.py migrate --database default")
+            #for app_name in ("tg_bot", "website"):
+            #    subprocess.run(f"python manage.py makemigrations {app_name}")
+            #    subprocess.run(f"python manage.py migrate --database default")
             subprocess.run(f"python manage.py runserver {config('input_address', default='0.0.0.0')}:{config('PORT', default='80')}")
         except:
-            for app_name in ("tg_bot", "website"):
-                subprocess.run(["python", "manage.py", "makemigrations", f"{app_name}"])
-                subprocess.run(["python", "manage.py", "migrate", "--database", "default"])
+            #for app_name in ("tg_bot", "website"):
+            #    subprocess.run(["python", "manage.py", "makemigrations", f"{app_name}"])
+            #    subprocess.run(["python", "manage.py", "migrate", "--database", "default"])
             subprocess.run(["python", "manage.py", "runserver", f"{config('input_address', default='0.0.0.0')}:{config('PORT', default='80')}"])
         os.chdir("..")
 
