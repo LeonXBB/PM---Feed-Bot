@@ -69,7 +69,7 @@ class BotUser(models.Model):
             from .PasswordPair import PasswordPair
             from ...screens.remainders.Remainder import Remainder
 
-            password = command.split(" ")[1]
+            password = command.split("/new_user ")[1]
             new_obj = PasswordPair()
 
             if len(password) == 64:
@@ -79,7 +79,10 @@ class BotUser(models.Model):
 
             new_obj.save()
             
-            return Remainder._get_("PasswordRegistered").schedule(int(time.time()), self.id)
+            try:
+                return Remainder._get_("PasswordRegistered").schedule(int(time.time()), self.id)
+            except Exception as e:
+                print(e)
 
         else:    
             return self.receive_text_from(command)
