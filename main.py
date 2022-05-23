@@ -10,7 +10,7 @@ from feed_bot.tg_bot.bin.main import FeedBot
 
 if __name__ == "__main__":
 
-    def start_server(bot_obj):
+    def start_server():
           
         os.chdir('feed_bot')
         #subprocess.run("daphne -v 0 meta.asgi:application")
