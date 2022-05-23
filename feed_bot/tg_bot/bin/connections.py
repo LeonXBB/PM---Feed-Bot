@@ -178,6 +178,8 @@ class PollingConnection(Connection):
 
     def run(self):
 
+        print("name:", __name__)
+
         try:
             print("initin scheduling...")
             scheduling = mp.Process(target=self.run_schedule, name="scheduling", args=(self.parent, ))
