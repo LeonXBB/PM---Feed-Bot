@@ -29,14 +29,6 @@ if __name__ == "__main__":
     def start_bot(bot_obj):
         bot_obj.run()
 
-    def start_scheduling(bot_obj):
-        
-        print("initin scheduling...")
-        scheduling = mp.Process(target=bot_obj.connection.run_schedule, name="scheduling", args=(bot_obj, ))
-        print("scheduling created")
-        scheduling.start()
-        print("scheduling started")
-
     def main():
 
         try:
@@ -48,7 +40,7 @@ if __name__ == "__main__":
 
         server_process = mp.Process(target=start_server, name="server", args=(bot,))
         bot_process = mp.Process(target=start_bot, name="bot", args=(bot,))
-        scheduling_process = mp.Process(target=start_scheduling, name="scheduling", args=(bot,))
+        scheduling_process = mp.Process(target=bot.connection.run_schedule, name="scheduling", args=(bot_obj, ))
 
         server_process.start()
         bot_process.start()
