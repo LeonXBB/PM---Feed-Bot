@@ -32,8 +32,6 @@ if __name__ == "__main__":
         bot.run()
 
     def main():
-
-        mp.set_start_method('spawn')
         
         server_process = mp.Process(target=start_server, name="server")
         bot_process = mp.Process(target=start_bot, name="bot")
