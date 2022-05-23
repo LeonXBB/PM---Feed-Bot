@@ -178,18 +178,12 @@ class PollingConnection(Connection):
 
     def run(self):
 
-        try:
-            print("initin scheduling...")
-            scheduling = mp.Process(target=self.run_schedule, name="scheduling", args=(self.parent, ))
-            print("scheduling created")
-            try:
-                scheduling.start()
-                print("scheduling started")
-            except Exception as e:
-                print("scheduling failed to start:", e)
-        except Exception as e:
-            print(e)    
-
+        print("initin scheduling...")
+        scheduling = mp.Process(target=self.run_schedule, name="scheduling", args=(self.parent, ))
+        print("scheduling created")
+        scheduling.start()
+        print("scheduling started")
+        
         self.parent.infinity_polling()
 
 class WebHookConnection(Connection):
