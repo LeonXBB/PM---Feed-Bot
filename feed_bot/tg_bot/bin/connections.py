@@ -56,7 +56,7 @@ class PollingConnection(Connection):
             mess_type = "text"
             mess_content = message.text
         elif type(message) == telebot.types.Message and message.text.startswith("/"):
-            mess_id =  message.message_id
+            mess_id = message.message_id
             mess_type = "command"
             mess_content = message.text
         elif type(message) == telebot.types.CallbackQuery:
@@ -70,6 +70,8 @@ class PollingConnection(Connection):
             mess_content = "n\\a"
 
         message_data = {"user_id": str(message.from_user.id), "mess_id": mess_id, "mess_type": mess_type, "mess_content": mess_content}
+
+        print(message_data)
 
         self.parent.receive(message_data)
 
