@@ -10,7 +10,7 @@ from feed_bot.tg_bot.bin.main import FeedBot
 
 if __name__ == "__main__":
 
-    def start_server():
+    def start_server(bot_obj):
           
         os.chdir('feed_bot')
         #subprocess.run("daphne -v 0 meta.asgi:application")
@@ -26,13 +26,13 @@ if __name__ == "__main__":
             subprocess.run(["python", "manage.py", "runserver", f"{config('input_address', default='0.0.0.0')}:{config('PORT', default='80')}"])
         os.chdir("..")
 
-    def start_bot():
-        bot.run()
+    def start_bot(bot_obj):
+        bot_obj.run()
 
-    def start_scheduling():
+    def start_scheduling(bot_obj):
         
         print("initin scheduling...")
-        scheduling = mp.Process(target=bot.connection.run_schedule, name="scheduling", args=(bot, ))
+        scheduling = mp.Process(target=bot_obj.connection.run_schedule, name="scheduling", args=(bot_obj, ))
         print("scheduling created")
         scheduling.start()
         print("scheduling started")
@@ -46,9 +46,9 @@ if __name__ == "__main__":
 
         bot = FeedBot()
 
-        server_process = mp.Process(target=start_server, name="server")
-        bot_process = mp.Process(target=start_bot, name="bot")
-        scheduling_process = mp.Process(target=start_scheduling, name="scheduling")
+        server_process = mp.Process(target=start_server, name="server", args=(bot,))
+        bot_process = mp.Process(target=start_bot, name="bot", args=(bot,))
+        scheduling_process = mp.Process(target=start_scheduling, name="scheduling", args=(bot,))
 
         server_process.start()
         bot_process.start()
