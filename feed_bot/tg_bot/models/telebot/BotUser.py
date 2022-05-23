@@ -65,22 +65,29 @@ class BotUser(models.Model):
             return self.show_screen_to(*command.split(" ")[1:]) if self.is_superadmin else None
         
         elif command.startswith('/new_user') and self.is_superadmin:
-                
+            
+            print('command received...')
             from .PasswordPair import PasswordPair
             from ...screens.remainders.Remainder import Remainder
 
             password = " ".join(command.split("/new_user")[1:])
+            print("password_calculated...", password)
             new_obj = PasswordPair()
+            print("new_obj_created...")
 
             if len(password) == 64:
                 new_obj.password_sha256 = password
             else:
                 new_obj.password_sha256 = hashlib.sha256(password.encode('utf-8')).hexdigest()
+            print("lenght checked...")
 
             new_obj.save()
-            
+            print("new_obj_saved...")       
+
             try:
-                return Remainder._get_("PasswordRegistered").schedule(int(time.time()), self.id)
+                rv = Remainder._get_("PasswordRegistered").schedule(int(time.time()), self.id)
+                print("remainder_scheduled...", rv)
+                return rv
             except Exception as e:
                 print(e)
 

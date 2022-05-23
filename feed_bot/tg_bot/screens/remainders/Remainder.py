@@ -12,8 +12,11 @@ class Remainder(Screen):
     @classmethod
     def _get_(cls, name=None, screen_id=None, remainder_id=None):
         
+        print("looking for remainder", name, screen_id, remainder_id)
+
         for remainder in cls.remainders:
             if ((remainder.remainder_id == remainder_id or remainder_id is None) and (remainder.screen_id == screen_id or screen_id is None) and (remainder.remainder_name == name or name is None)): 
+                print("remainder found...", remainder)
                 return remainder
 
     def __init__(self, via, screen_id="-1", remainder_name="", bot_strings=None) -> None:
