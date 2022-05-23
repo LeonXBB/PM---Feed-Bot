@@ -138,11 +138,15 @@ class FeedBot(TeleBot):
 
         elif message["mess_type"] == "command":
             
-            reply = Utils.api("execute_method", 
-            model="BotUser",
-            params={"id": user_id},
-            method={"name": "receive_command_from", "params": [message["mess_content"], ]}
-            )
+            try:
+                reply = Utils.api("execute_method", 
+                model="BotUser",
+                params={"id": user_id},
+                method={"name": "receive_command_from", "params": [message["mess_content"], ]}
+                )
+            except Exception as e:
+                print(e)
+                
             print('command reply is, ', reply)
 
         elif message["mess_type"] == "button" and not message["mess_content"][0].startswith("r_") and not message["mess_content"][0].startswith("d_"):
