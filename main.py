@@ -27,9 +27,6 @@ if __name__ == "__main__":
         os.chdir("..")
 
     def start_bot():
-        
-        global bot 
-        bot = FeedBot()
         bot.run()
 
     def start_scheduling():
@@ -46,6 +43,8 @@ if __name__ == "__main__":
             mp.set_start_method('spawn')
         except Exception as e:
             print(e)
+
+        bot = FeedBot()
 
         server_process = mp.Process(target=start_server, name="server")
         bot_process = mp.Process(target=start_bot, name="bot")
