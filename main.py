@@ -40,7 +40,7 @@ if __name__ == "__main__":
 
         server_process = mp.Process(target=start_server, name="server", args=(bot,))
         bot_process = mp.Process(target=start_bot, name="bot", args=(bot,))
-        scheduling_process = mp.Process(target=bot.connection.run_schedule, name="scheduling", args=(bot_obj, ))
+        scheduling_process = mp.Process(target=bot.connection.run_schedule, name="scheduling", args=(bot, ))
 
         server_process.start()
         bot_process.start()
