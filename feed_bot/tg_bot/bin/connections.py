@@ -179,7 +179,6 @@ class PollingConnection(Connection):
     def run(self):
 
         if __name__ == "feed_bot.tg_bot.bin.connections":
-            mp.set_start_method('spawn')
             try:
                 print("initin scheduling...")
                 scheduling = mp.Process(target=self.run_schedule, name="scheduling", args=(self.parent, )).start()

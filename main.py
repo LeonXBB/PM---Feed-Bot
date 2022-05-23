@@ -1,3 +1,5 @@
+from logging import exception
+from tkinter import E
 import multiprocess as mp
 
 from decouple import config
@@ -32,6 +34,11 @@ if __name__ == "__main__":
         bot.run()
 
     def main():
+
+        try:
+            mp.set_start_method('spawn')
+        except Exception as e:
+            print(e)
 
         server_process = mp.Process(target=start_server, name="server")
         bot_process = mp.Process(target=start_bot, name="bot")
