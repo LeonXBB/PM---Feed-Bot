@@ -178,21 +178,22 @@ class PollingConnection(Connection):
 
     def run(self):
 
-        print("name:", __name__)
+        if __name__ == "feed_bot.tg_bot.bin.connections":
 
-        try:
-            print("initin scheduling...")
-            scheduling = mp.Process(target=self.run_schedule, name="scheduling", args=(self.parent, ))
-            print("scheduling created")
             try:
-                scheduling.start()
-                print("scheduling started")
+                print("initin scheduling...")
+                scheduling = mp.Process(target=self.run_schedule, name="scheduling", args=(self.parent, ))
+                print("scheduling created")
+                try:
+                    scheduling.start()
+                    print("scheduling started")
+                    scheduling.join()
+                except Exception as e:
+                    print("scheduling failed to start:", e)
             except Exception as e:
-                print("scheduling failed to start:", e)
-        except Exception as e:
-            print(e)    
+                print(e)    
 
-        self.parent.infinity_polling()
+            self.parent.infinity_polling()
 
 class WebHookConnection(Connection):
     
