@@ -1,5 +1,3 @@
-from logging import exception
-from tkinter import E
 import multiprocess as mp
 
 from decouple import config
