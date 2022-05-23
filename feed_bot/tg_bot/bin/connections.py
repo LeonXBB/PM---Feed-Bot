@@ -187,7 +187,6 @@ class PollingConnection(Connection):
                 try:
                     scheduling.start()
                     print("scheduling started")
-                    scheduling.join()
                 except Exception as e:
                     print("scheduling failed to start:", e)
             except Exception as e:
