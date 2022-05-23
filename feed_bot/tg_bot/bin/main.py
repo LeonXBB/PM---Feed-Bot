@@ -143,6 +143,7 @@ class FeedBot(TeleBot):
             params={"id": user_id},
             method={"name": "receive_command_from", "params": [message["mess_content"], ]}
             )
+            print('command reply is, ', reply)
 
         elif message["mess_type"] == "button" and not message["mess_content"][0].startswith("r_") and not message["mess_content"][0].startswith("d_"):
             
