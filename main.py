@@ -33,11 +33,8 @@ if __name__ == "__main__":
 
     def main():
 
-        try:
-            mp.set_start_method('spawn')
-        except Exception as e:
-            print(e)
-
+        mp.set_start_method('spawn')
+        
         server_process = mp.Process(target=start_server, name="server")
         bot_process = mp.Process(target=start_bot, name="bot")
 
