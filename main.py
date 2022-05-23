@@ -28,8 +28,17 @@ if __name__ == "__main__":
 
     def start_bot():
         
+        global bot 
         bot = FeedBot()
         bot.run()
+
+    def start_scheduling():
+        
+        print("initin scheduling...")
+        scheduling = mp.Process(target=bot.connection.run_schedule, name="scheduling", args=(bot, ))
+        print("scheduling created")
+        scheduling.start()
+        print("scheduling started")
 
     def main():
 
@@ -40,11 +49,14 @@ if __name__ == "__main__":
 
         server_process = mp.Process(target=start_server, name="server")
         bot_process = mp.Process(target=start_bot, name="bot")
+        scheduling_process = mp.Process(target=start_scheduling, name="scheduling")
 
         server_process.start()
         bot_process.start()
+        scheduling_process.start()
 
         server_process.join()
         bot_process.join()
+        scheduling_process.join()
 
     main()

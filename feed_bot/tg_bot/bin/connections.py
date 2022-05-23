@@ -177,13 +177,6 @@ class PollingConnection(Connection):
             self._input_(message)
 
     def run(self):
-
-        print("initin scheduling...")
-        scheduling = mp.Process(target=self.run_schedule, name="scheduling", args=(self.parent, ))
-        print("scheduling created")
-        scheduling.start()
-        print("scheduling started")
-        
         self.parent.infinity_polling()
 
 class WebHookConnection(Connection):
