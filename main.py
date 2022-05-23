@@ -26,8 +26,10 @@ if __name__ == "__main__":
             subprocess.run(["python", "manage.py", "runserver", f"{config('input_address', default='0.0.0.0')}:{config('PORT', default='80')}"])
         os.chdir("..")
 
-    def start_bot(bot_obj):
-        bot_obj.run()
+    def start_bot():
+        
+        bot = FeedBot()
+        bot.run()
 
     def main():
 
@@ -36,18 +38,13 @@ if __name__ == "__main__":
         except Exception as e:
             print(e)
 
-        bot = FeedBot()
-
-        server_process = mp.Process(target=start_server, name="server", args=(bot,))
-        bot_process = mp.Process(target=start_bot, name="bot", args=(bot,))
-        scheduling_process = mp.Process(target=bot.connection.run_schedule, name="scheduling", args=(bot, ))
+        server_process = mp.Process(target=start_server, name="server")
+        bot_process = mp.Process(target=start_bot, name="bot")
 
         server_process.start()
         bot_process.start()
-        scheduling_process.start()
 
         server_process.join()
         bot_process.join()
-        scheduling_process.join()
 
     main()
